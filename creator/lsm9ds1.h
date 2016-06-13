@@ -51,16 +51,14 @@ class LSM9DS1 {
   // communication mode as well.
   // Input:
   //	- interface = Either IMU_MODE_SPI or IMU_MODE_I2C, whichever you're
-  // using
+  //using
   //				to talk to the IC.
   //	- xgAddr = If IMU_MODE_I2C, this is the I2C address of the
-  // accel/gyroscope.
-  // 				If IMU_MODE_SPI, this is the chip select pin of the
-  // gyro
+  //accel/gyroscope.
+  // 				If IMU_MODE_SPI, this is the chip select pin of the gyro
   // (CS_AG)
   //	- mAddr = If IMU_MODE_I2C, this is the I2C address of the magnetometer.
-  //				If IMU_MODE_SPI, this is the cs pin of the
-  //magnetometer
+  //				If IMU_MODE_SPI, this is the cs pin of the magnetometer
   //(CS_M)
   LSM9DS1(interface_mode interface, uint8_t xgAddr, uint8_t mAddr);
   LSM9DS1();
@@ -223,7 +221,7 @@ class LSM9DS1 {
   // Input:
   //	- generator = Interrupt axis/high-low events
   //	  Any OR'd combination of ZHIE_XL, ZLIE_XL, YHIE_XL, YLIE_XL, XHIE_XL,
-  // XLIE_XL
+  //XLIE_XL
   //	- andInterrupts = AND/OR combination of interrupt events
   //	  true: AND combination
   //	  false: OR combination
@@ -235,7 +233,7 @@ class LSM9DS1 {
   //	  Multiply by 128 to get the actual raw accel value.
   //	- axis = Axis to be configured. Either X_AXIS, Y_AXIS, or Z_AXIS
   //	- duration = Duration value must be above or below threshold to trigger
-  // interrupt
+  //interrupt
   //	- wait = Wait function on duration counter
   //	  true: Wait for duration samples before exiting interrupt
   //	  false: Wait function off
@@ -258,7 +256,7 @@ class LSM9DS1 {
   //	  Value is equivalent to raw gyroscope value.
   //	- axis = Axis to be configured. Either X_AXIS, Y_AXIS, or Z_AXIS
   //	- duration = Duration value must be above or below threshold to trigger
-  // interrupt
+  //interrupt
   //	- wait = Wait function on duration counter
   //	  true: Wait for duration samples before exiting interrupt
   //	  false: Wait function off
@@ -271,9 +269,9 @@ class LSM9DS1 {
   //	  Possible values: XG_INT1 or XG_INT2
   //	- generator = Or'd combination of interrupt generators.
   //	  Possible values: INT_DRDY_XL, INT_DRDY_G, INT1_BOOT (INT1 only),
-  // INT2_DRDY_TEMP (INT2 only)
+  //INT2_DRDY_TEMP (INT2 only)
   //	  INT_FTH, INT_OVR, INT_FSS5, INT_IG_XL (INT1 only), INT1_IG_G (INT1
-  // only), INT2_INACT (INT2 only)
+  //only), INT2_INACT (INT2 only)
   //	- activeLow = Interrupt active configuration
   //	  Can be either INT_ACTIVE_HIGH or INT_ACTIVE_LOW
   //	- pushPull =  Push-pull or open drain interrupt configuration
@@ -322,9 +320,9 @@ class LSM9DS1 {
   // setFIFO() - Configure FIFO mode and Threshold
   // Input:
   //	- fifoMode: Set FIFO mode to off, FIFO (stop when full), continuous,
-  // bypass
+  //bypass
   //	  Possible inputs: FIFO_OFF, FIFO_THS, FIFO_CONT_TRIGGER,
-  // FIFO_OFF_TRIGGER, FIFO_CONT
+  //FIFO_OFF_TRIGGER, FIFO_CONT
   //	- fifoThs: FIFO threshold level setting
   //	  Any value from 0-0x1F is acceptable.
   void setFIFO(fifoMode_type fifoMode, uint8_t fifoThs);

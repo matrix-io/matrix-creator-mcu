@@ -24,4 +24,10 @@
     for full details of how and when the exception can be applied.
 */
 
+
+#define USE_SAM3_UART0  TRUE
+#define USE_SAM3_UART1  TRUE
+
+
+
 /*** EOF ***/
