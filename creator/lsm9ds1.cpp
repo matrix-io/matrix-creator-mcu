@@ -907,73 +907,36 @@ void LSM9DS1::mReadBytes(uint8_t subAddress, uint8_t* dest, uint8_t count) {
   I2CreadBytes(_mAddress, subAddress, dest, count);
 }
 
+static const Pin pins[] = {PIN_TWD0, PIN_TWCK0};
+
 void LSM9DS1::initI2C() {
-  //	Wire.begin();	// Initialize I2C library
+  /* Configure TWI */
+  PIO_Configure(pins, PIO_LISTSIZE(pins));
+  PMC->PMC_WPMR = 0x504D4300; /* Disable write protect */
+  PMC->PMC_PCER0 = 1 << ID_TWI0;
+  PMC->PMC_WPMR = 0x504D4301; /* Enable write protect */
+  TWI_ConfigureMaster(TWI0, TWCK, BOARD_MCK);
+  TWID_Initialize(&twid, TWI0);
 }
 
 // Wire.h read and write protocols
 void LSM9DS1::I2CwriteByte(uint8_t address, uint8_t subAddress, uint8_t data) {
-  /*
-          Wire.beginTransmission(address);  // Initialize the Tx buffer
-          Wire.write(subAddress);           // Put slave register address in Tx
-     buffer
-          Wire.write(data);                 // Put data in Tx buffer
-          Wire.endTransmission();           // Send the Tx buffer
-  */
+  // TODO (andres.calderon): Handle timeouts, handle errors
+  TWID_Write(&twid, address, subAddress, 1, &data, 1, 0);
 }
 
 uint8_t LSM9DS1::I2CreadByte(uint8_t address, uint8_t subAddress) {
-  /*
-          int timeout = LSM9DS1_COMMUNICATION_TIMEOUT;
-          uint8_t data; // `data` will store the register data
-
-          Wire.beginTransmission(address);         // Initialize the Tx buffer
-          Wire.write(subAddress);	                 // Put slave register
-     address in Tx buffer
-          Wire.endTransmission(true);             // Send the Tx buffer, but
-     send a restart to keep connection alive
-          Wire.requestFrom(address, (uint8_t) 1);  // Read one byte from slave
-     register address
-          while ((Wire.available() < 1) && (timeout-- > 0))
-                  delay(1);
-
-          if (timeout <= 0)
-                  return 255;	//! Bad! 255 will be misinterpreted as a good
-     value.
-
-          data = Wire.read();                      // Fill Rx buffer with result
-          return data;                             // Return data read from
-     slave register
-  */
+  // TODO (andres.calderon): Handle timeouts, handle errors
+  uint8_t data;
+  if (TWID_Read(&twid, address, subAddress, 1, &data, 1, 0) == 0) return data;
+  return 255;
 }
 
 uint8_t LSM9DS1::I2CreadBytes(uint8_t address, uint8_t subAddress,
                               uint8_t* dest, uint8_t count) {
-  /*
-          int timeout = LSM9DS1_COMMUNICATION_TIMEOUT;
-          Wire.beginTransmission(address);   // Initialize the Tx buffer
-          // Next send the register to be read. OR with 0x80 to indicate
-     multi-read.
-          Wire.write(subAddress | 0x80);     // Put slave register address in Tx
-     buffer
-
-          Wire.endTransmission(true);             // Send the Tx buffer, but
-     send a restart to keep connection alive
-          uint8_t i = 0;
-          Wire.requestFrom(address, count);  // Read bytes from slave register
-     address
-          while ((Wire.available() < count) && (timeout-- > 0))
-                  delay(1);
-          if (timeout <= 0)
-                  return -1;
-
-          for (int i=0; i<count;)
-          {
-                  if (Wire.available())
-                  {
-                          dest[i++] = Wire.read();
-                  }
-          }
-          return count;
-  */
+  // TODO (andres.calderon): Handle timeouts, handle errors
+  if (TWID_Read(&twid, address, subAddress, 1, dest, count, 0) == 0) {
+    return count;
+  }
+  return -1;
 }
