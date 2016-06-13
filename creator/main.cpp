@@ -34,8 +34,13 @@ static msg_t Thread2(void *arg) {
 
   imu.begin();
   while (TRUE) {
-    //    imu.readGyro();
-    //    imu.readMag();
+    chThdSleepMilliseconds(1);
+    imu.readGyro();
+    
+    chThdSleepMilliseconds(1);
+    imu.readMag();
+
+    chThdSleepMilliseconds(1);
     imu.readAccel();
 
     chprintf((BaseChannel *)&SD1,
