@@ -1,6 +1,7 @@
 #ifndef _PSRAM_H_
 #define _PSRAM_H_
 
+
 /*----------------------------------------------------------------------------
  *        Local definitions
  *----------------------------------------------------------------------------*/
@@ -21,12 +22,14 @@
 /*----------------------------------------------------------------------------
  *        Local variables
  *----------------------------------------------------------------------------*/
+#include "atmel_pio.h"
+
 
 /** PIOs configuration for EBI connect to Psram. */
-const Pin pinPsram[] = {PIN_DATA_BUS_ON_EBI, \
-                        PIN_NRD_ON_EBI, \
-                        PIN_NWE_ON_EBI, \
-                        PIN_NCS3_ON_EBI,\
+const Pin pinPsram[5] = {PIN_DATA_BUS_ON_EBI,
+                        PIN_NRD_ON_EBI, 
+                        PIN_NWE_ON_EBI, 
+                        PIN_NCS3_ON_EBI,
                         PIN_ADDR_BUS_ON_EBI
                         };
 

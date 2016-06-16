@@ -30,7 +30,7 @@ Distributed as-is; no warranty is given.
 #include "lsm9ds1_registers.h"
 
 /** TWI clock frequency in Hz. */
-#define TWCK 10000
+#define TWCK 400000
 #define BOARD_MCK 48000000
 
 #define LSM9DS1_AG_ADDR(sa0) ((sa0) == 0 ? 0x6A : 0x6B)
