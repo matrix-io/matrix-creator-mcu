@@ -43,7 +43,7 @@ static WORKING_AREA(waThread2, 1024);
 static msg_t Thread2(void *arg) {
   (void)arg;
 
-  float sampleFrequency = 4;
+  float sampleFrequency = 5;
 
   LSM9DS1 imu(IMU_MODE_I2C, 0x6A, 0x1C);
 
@@ -59,7 +59,7 @@ static msg_t Thread2(void *arg) {
   systime_t time = chTimeNow();  // T0
   int counter = 0;
   while (TRUE) {
-    time += MS2ST(250);  // Next deadline
+    time += MS2ST(200);  // Next deadline
 
     chThdSleepMicroseconds(1);
     imu.readGyro();
@@ -78,18 +78,26 @@ static msg_t Thread2(void *arg) {
     chprintf((BaseChannel *)&SD1, "counter = %d\r", counter);
     counter++;
 
+    if (imu_filer_.getRoll() < -20 || imu_filer_.getRoll() > 20) {
+      needle_south = (int)(imu_filer_.getPitch() / 10);
+      needle_north = needle_south > 18 ? needle_south - 18 : needle_south + 17;
+    } else {
+      needle_south = (int)(imu_filer_.getYaw() / 10);
+      needle_north = needle_south > 18 ? needle_south - 18 : needle_south + 17;
+    }
+
     if (0)
       chprintf((BaseChannel *)&SD1,
                "gyro: %d %d %d,  accel: %d %d %d,  mag: %d %d %d\n\r", imu.gx,
                imu.gy, imu.gz, imu.ax, imu.ay, imu.az, imu.mx, imu.my, imu.mz);
 
     needle_south = (int)(imu_filer_.getYaw() / 10);
-
     needle_north = needle_south > 18 ? needle_south - 18 : needle_south + 17;
 
-    chprintf((BaseChannel *)&SD1, "roll: %d,  pitch: %d,  yaw: %d\n\r",
-             (int)imu_filer_.getRoll(), (int)imu_filer_.getPitch(),
-             (int)imu_filer_.getYaw());
+    if (0)
+      chprintf((BaseChannel *)&SD1, "roll: %d,  pitch: %d,  yaw: %d\n\r",
+               (int)imu_filer_.getRoll(), (int)imu_filer_.getPitch(),
+               (int)imu_filer_.getYaw());
 
     chThdSleepUntil(time);
   }
@@ -114,8 +122,10 @@ static msg_t Thread3(void *arg) {
   /* complete SMC configuration between PSRAM and SMC waveforms.*/
   BOARD_ConfigurePSRAM(SMC);
 
+  systime_t time = chTimeNow();
   while (TRUE) {
-    chThdSleepMilliseconds(100);
+    time += MS2ST(200);  // Next deadline
+
     for (led = 0; led < 35; led++) {
       leds[led].r = 0;
       leds[led].g = 0;
@@ -126,6 +136,8 @@ static msg_t Thread3(void *arg) {
     leds[needle_south].w = 0x4F;
 
     leds[needle_north].r = 0xFF;
+
+    chThdSleepUntil(time);
   }
 
   return (0);
