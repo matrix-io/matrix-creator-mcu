@@ -11,6 +11,7 @@
 #include "lsm9ds1.h"
 #include "madgwick_ahrs.h"
 #include "ch.hpp"
+#include <string.h>
 #include <mcuconf.h>
 
 extern "C" {
@@ -22,6 +23,9 @@ extern "C" {
 
 /** Pin PCK2 (PA31 Peripheral B) */
 const Pin pinPCK[] = PIN_PCK2;
+
+static int needle_south = 0;
+static int needle_north = 0;
 
 static WORKING_AREA(waThread1, 128);
 static msg_t Thread1(void *arg) {
@@ -39,7 +43,7 @@ static WORKING_AREA(waThread2, 1024);
 static msg_t Thread2(void *arg) {
   (void)arg;
 
-  float sampleFrequency = 2;
+  float sampleFrequency = 4;
 
   LSM9DS1 imu(IMU_MODE_I2C, 0x6A, 0x1C);
 
@@ -55,63 +59,75 @@ static msg_t Thread2(void *arg) {
   systime_t time = chTimeNow();  // T0
   int counter = 0;
   while (TRUE) {
-    time += MS2ST(500);  // Next deadline
+    time += MS2ST(250);  // Next deadline
 
-    chThdSleepMicroseconds(500);
+    chThdSleepMicroseconds(1);
     imu.readGyro();
 
-    chThdSleepMicroseconds(500);
+    chThdSleepMicroseconds(1);
     imu.readMag();
 
-    chThdSleepMicroseconds(500);
+    chThdSleepMicroseconds(1);
     imu.readAccel();
-    /*
-        imu_filer_.update(
-            imu.calcGyro(imu.gx), imu.calcGyro(imu.gy), imu.calcGyro(imu.gz),
-            imu.calcAccel(imu.ax), imu.calcAccel(imu.ay), imu.calcAccel(imu.az),
-            imu.calcMag(imu.mx), imu.calcMag(imu.my), imu.calcMag(imu.mz));
-    */
+
+    imu_filer_.update(
+        imu.calcGyro(imu.gx), imu.calcGyro(imu.gy), imu.calcGyro(imu.gz),
+        imu.calcAccel(imu.ax), imu.calcAccel(imu.ay), imu.calcAccel(imu.az),
+        imu.calcMag(imu.mx), imu.calcMag(imu.my), imu.calcMag(imu.mz));
+
     chprintf((BaseChannel *)&SD1, "counter = %d\r", counter);
     counter++;
 
-    chprintf((BaseChannel *)&SD1,
-             "gyro: %d %d %d,  accel: %d %d %d,  mag: %d %d %d\n\r", imu.gx,
-             imu.gy, imu.gz, imu.ax, imu.ay, imu.az, imu.mx, imu.my, imu.mz);
+    if (0)
+      chprintf((BaseChannel *)&SD1,
+               "gyro: %d %d %d,  accel: %d %d %d,  mag: %d %d %d\n\r", imu.gx,
+               imu.gy, imu.gz, imu.ax, imu.ay, imu.az, imu.mx, imu.my, imu.mz);
 
-    ///    chThdSleepUntil(time);
+    needle_south = (int)(imu_filer_.getYaw() / 10);
+
+    needle_north = needle_south > 18 ? needle_south - 18 : needle_south + 17;
+
+    chprintf((BaseChannel *)&SD1, "roll: %d,  pitch: %d,  yaw: %d\n\r",
+             (int)imu_filer_.getRoll(), (int)imu_filer_.getPitch(),
+             (int)imu_filer_.getYaw());
+
+    chThdSleepUntil(time);
   }
   return (0);
 }
 
+typedef struct LedRGBW {
+  uint8_t g;
+  uint8_t r;
+  uint8_t b;
+  uint8_t w;
+} LedRGBW_;
+
 static WORKING_AREA(waThread3, 1024);
 static msg_t Thread3(void *arg) {
   (void)arg;
-  uint8_t *ptr = (uint8_t *)PSRAM_BASE_ADDRESS;
-  uint32_t i, j;
+  LedRGBW *leds = (LedRGBW *)PSRAM_BASE_ADDRESS;
+  int led;
 
   /* Configure EBI I/O for psram connection*/
   PIO_Configure(pinPsram, PIO_LISTSIZE(pinPsram));
   /* complete SMC configuration between PSRAM and SMC waveforms.*/
   BOARD_ConfigurePSRAM(SMC);
 
-  for (i = 0; i < 140; i++) {
-    ptr[i] = 0x01;
+  while (TRUE) {
+    chThdSleepMilliseconds(100);
+    for (led = 0; led < 35; led++) {
+      leds[led].r = 0;
+      leds[led].g = 0;
+      leds[led].b = 0;
+      leds[led].w = 0;
+    }
+
+    leds[needle_south].w = 0x4F;
+
+    leds[needle_north].r = 0xFF;
   }
 
-  while (TRUE) {
-    for (j = 0; j < 4; j++) {
-      ptr[j] = 0x20;
-      chThdSleepMilliseconds(100);
-      for (i = 0; i < 35; i++) {
-        chThdSleepMilliseconds(100);
-        ptr[i * 4 + j] = 0x00;
-        ptr[(i + 1) * 4 + j] = 0x20;
-      }
-      for (i = 0; i < 140; i++) {
-        ptr[i] = 0x0;
-      }
-    }
-  }
   return (0);
 }
 
