@@ -26,6 +26,7 @@ const Pin pinPCK[] = PIN_PCK2;
 
 static int needle_south = 0;
 static int needle_north = 0;
+unsigned char data_rx;
 
 static WORKING_AREA(waThread1, 128);
 static msg_t Thread1(void *arg) {
@@ -75,7 +76,7 @@ static msg_t Thread2(void *arg) {
         imu.calcAccel(imu.ax), imu.calcAccel(imu.ay), imu.calcAccel(imu.az),
         imu.calcMag(imu.mx), imu.calcMag(imu.my), imu.calcMag(imu.mz));
 
-    chprintf((BaseChannel *)&SD1, "counter = %d\r", counter);
+    //chprintf((BaseChannel *)&SD1, "counter = %d\r", counter);
     counter++;
 
     if (imu_filer_.getRoll() < -20 || imu_filer_.getRoll() > 20) {
@@ -111,6 +112,13 @@ typedef struct LedRGBW {
   uint8_t w;
 } LedRGBW_;
 
+typedef struct RGB332 {
+  uint8_t r:3;
+  uint8_t g:3;
+  uint8_t b:2;
+} RGB332_;
+
+
 static WORKING_AREA(waThread3, 1024);
 static msg_t Thread3(void *arg) {
   (void)arg;
@@ -123,25 +131,34 @@ static msg_t Thread3(void *arg) {
   BOARD_ConfigurePSRAM(SMC);
 
   systime_t time = chTimeNow();
+  
+  RGB332* rgb332 = (RGB332*)&data_rx;
   while (TRUE) {
     time += MS2ST(200);  // Next deadline
 
     for (led = 0; led < 35; led++) {
-      leds[led].r = 0;
-      leds[led].g = 0;
-      leds[led].b = 0;
+      leds[led].r = rgb332->r<<2;
+      leds[led].g = rgb332->g<<2;
+      leds[led].b = rgb332->b<<2;
       leds[led].w = 0;
     }
-
-    leds[needle_south].w = 0x4F;
-
-    leds[needle_north].r = 0xFF;
 
     chThdSleepUntil(time);
   }
 
   return (0);
 }
+
+static WORKING_AREA(waThread4, 128);
+static msg_t Thread4(void *arg) {
+  (void)arg;
+  while (TRUE) {
+    data_rx = chIOGet(&SD1);
+    chprintf((BaseChannel *)&SD1, "data:%d",data_rx);
+  }
+  return (0);
+}
+
 
 void fpgaOscInit() {
   PIO_Configure(pinPCK, 1);
@@ -165,6 +182,8 @@ int main(void) {
 
   /* Creates the imu thread. */
   chThdCreateStatic(waThread3, sizeof(waThread3), NORMALPRIO, Thread3, NULL);
+  /* Creates Serial get thread. */
+  chThdCreateStatic(waThread4, sizeof(waThread4), NORMALPRIO, Thread4, NULL);
 
   return (0);
 }
