@@ -56,7 +56,7 @@ static WORKING_AREA(waIMUThread, 1024);
 static msg_t IMUThread(void *arg) {
   (void)arg;
 
-  float sampleFrequency = 5;
+  float sampleFrequency = 5;// TODO (andres.calderon): Improve the sampleFrequency
 
   char *psram = (char *)PSRAM_BASE_ADDRESS;
 
