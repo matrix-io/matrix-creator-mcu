@@ -23,6 +23,7 @@
 #include "board.h"
 #include "lsm9ds1.h"
 #include "madgwick_ahrs.h"
+#include "sensors_data.h"
 
 #include <string.h>
 #include <mcuconf.h>
@@ -56,20 +57,6 @@ static void WriteToPSRAM(const char *src, char *ram, int len) {
   }
 }
 
-struct IMUData {
-  float yaw;
-  float pitch;
-  float roll;
-  float accel_x;
-  float accel_y;
-  float accel_z;
-  float gyro_x;
-  float gyro_y;
-  float gyro_z;
-  float mag_x;
-  float mag_y;
-  float mag_z;
-};
 
 static WORKING_AREA(waIMUThread, 1024);
 static msg_t IMUThread(void *arg) {
@@ -78,7 +65,7 @@ static msg_t IMUThread(void *arg) {
   float sampleFrequency =
       5;  // TODO (andres.calderon): Improve the sampleFrequency
 
-  char *psram = (char *)PSRAM_BASE_ADDRESS;
+  register char *psram = (char *)PSRAM_BASE_ADDRESS;
 
   /* Configure EBI I/O for psram connection*/
   PIO_Configure(pinPsram, PIO_LISTSIZE(pinPsram));
@@ -129,7 +116,7 @@ static msg_t IMUThread(void *arg) {
     data.pitch = imu_filer_.getPitch();
     data.roll = imu_filer_.getRoll();
 
-    WriteToPSRAM((const char *)&data, psram, sizeof(data));
+    WriteToPSRAM((const char *)&data, &psram[mem_offset_imu], sizeof(data));
 
     chThdSleepUntil(time);
   }
