@@ -22,9 +22,9 @@
 #include "hal.h"
 #include "board.h"
 #include "lsm9ds1.h"
-#include "madgwick_ahrs.h"
 #include "sensors_data.h"
 
+#include <math.h>
 #include <string.h>
 #include <mcuconf.h>
 
@@ -57,13 +57,9 @@ static void WriteToPSRAM(const char *src, char *ram, int len) {
   }
 }
 
-
 static WORKING_AREA(waIMUThread, 1024);
 static msg_t IMUThread(void *arg) {
   (void)arg;
-
-  float sampleFrequency =
-      5;  // TODO (andres.calderon): Improve the sampleFrequency
 
   register char *psram = (char *)PSRAM_BASE_ADDRESS;
 
@@ -77,9 +73,6 @@ static msg_t IMUThread(void *arg) {
 
   imu.begin();
 
-  Madgwick imu_filer_;
-  imu_filer_.begin(sampleFrequency);
-
   /*
     http://www.chibios.org/dokuwiki/doku.php?id=chibios:kb:timing
   */
@@ -88,7 +81,7 @@ static msg_t IMUThread(void *arg) {
 
   IMUData data;
   while (TRUE) {
-    time += MS2ST(200);  // Next deadline
+    time += MS2ST(100);  // Next deadline
 
     chThdSleepMicroseconds(1);
     imu.readGyro();
@@ -108,13 +101,15 @@ static msg_t IMUThread(void *arg) {
     data.accel_y = imu.calcMag(imu.ay);
     data.accel_z = imu.calcMag(imu.az);
 
-    imu_filer_.update(data.gyro_x, data.gyro_y, data.gyro_z,
-                      data.accel_x, data.accel_y, data.accel_z,
-                      data.mag_x, data.mag_y, data.mag_z);
+    data.yaw = atan2(-data.mag_y, data.mag_x);
+    data.roll = atan2(data.accel_y, data.accel_z);
+    data.pitch = atan2(-data.accel_x, sqrt(data.accel_y * data.accel_y +
+                                           data.accel_z * data.accel_z));
 
-    data.yaw = imu_filer_.getYaw();
-    data.pitch = imu_filer_.getPitch();
-    data.roll = imu_filer_.getRoll();
+    // Convert everything from radians to degrees:
+    data.pitch *= 180.0 / M_PI;
+    data.roll *= 180.0 / M_PI;
+    data.yaw *= 180.0 / M_PI;
 
     WriteToPSRAM((const char *)&data, &psram[mem_offset_imu], sizeof(data));
 

@@ -73,7 +73,6 @@ CSRC = $(PORTSRC) \
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CPPSRC = lsm9ds1.cpp \
-         madgwick_ahrs.cpp \
          main.cpp
 
 # C sources to be compiled in ARM mode regardless of the global setting.
