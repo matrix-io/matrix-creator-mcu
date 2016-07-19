@@ -101,7 +101,7 @@ static msg_t IMUThread(void *arg) {
     data.accel_y = imu.calcMag(imu.ay);
     data.accel_z = imu.calcMag(imu.az);
 
-    data.yaw = atan2(-data.mag_y, data.mag_x);
+    data.yaw = atan2(data.mag_y, -data.mag_x);
     data.roll = atan2(data.accel_y, data.accel_z);
     data.pitch = atan2(-data.accel_x, sqrt(data.accel_y * data.accel_y +
                                            data.accel_z * data.accel_z));
