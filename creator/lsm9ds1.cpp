@@ -29,11 +29,11 @@ Distributed as-is; no warranty is given.
 
 float magSensitivity[4] = {0.00014, 0.00029, 0.00043, 0.00058};
 
-LSM9DS1::LSM9DS1() {
+LSM9DS1::LSM9DS1(creator::I2C* i2c) :i2c_(i2c) {
   init(IMU_MODE_I2C, LSM9DS1_AG_ADDR(1), LSM9DS1_M_ADDR(1));
 }
 
-LSM9DS1::LSM9DS1(interface_mode interface, uint8_t xgAddr, uint8_t mAddr) {
+LSM9DS1::LSM9DS1(creator::I2C* i2c, interface_mode interface, uint8_t xgAddr, uint8_t mAddr) : i2c_(i2c) {
   init(interface, xgAddr, mAddr);
 }
 
@@ -138,7 +138,6 @@ uint16_t LSM9DS1::begin() {
   calcmRes();  // Calculate Gs / ADC tick, stored in mRes variable
   calcaRes();  // Calculate g / ADC tick, stored in aRes variable
 
-  initI2C();  // Initialize I2C
 
   // To verify communication, we can read from the WHO_AM_I register of
   // each device. Store those in a variable so we can return them.
@@ -884,59 +883,29 @@ void LSM9DS1::constrainScales() {
 }
 
 void LSM9DS1::xgWriteByte(uint8_t subAddress, uint8_t data) {
-  I2CwriteByte(_xgAddress, subAddress, data);
+  i2c_->WriteByte(_xgAddress, subAddress, data);
 }
 
 void LSM9DS1::mWriteByte(uint8_t subAddress, uint8_t data) {
-  I2CwriteByte(_mAddress, subAddress, data);
+  i2c_->WriteByte(_mAddress, subAddress, data);
 }
 
 uint8_t LSM9DS1::xgReadByte(uint8_t subAddress) {
-  return I2CreadByte(_xgAddress, subAddress);
+  return i2c_->ReadByte(_xgAddress, subAddress);
 }
 
 void LSM9DS1::xgReadBytes(uint8_t subAddress, uint8_t* dest, uint8_t count) {
-  I2CreadBytes(_xgAddress, subAddress, dest, count);
+  i2c_->ReadBytes(_xgAddress, subAddress, dest, count);
 }
 
 uint8_t LSM9DS1::mReadByte(uint8_t subAddress) {
-  return I2CreadByte(_mAddress, subAddress);
+  return i2c_->ReadByte(_mAddress, subAddress);
 }
 
 void LSM9DS1::mReadBytes(uint8_t subAddress, uint8_t* dest, uint8_t count) {
-  I2CreadBytes(_mAddress, subAddress, dest, count);
+  i2c_->ReadBytes(_mAddress, subAddress, dest, count);
 }
 
-static const Pin pins[] = {PIN_TWD0, PIN_TWCK0};
 
-void LSM9DS1::initI2C() {
-  /* Configure TWI */
-  PIO_Configure(pins, PIO_LISTSIZE(pins));
-  PMC->PMC_WPMR = 0x504D4300; /* Disable write protect */
-  PMC->PMC_PCER0 = 1 << ID_TWI0;
-  PMC->PMC_WPMR = 0x504D4301; /* Enable write protect */
-  TWI_ConfigureMaster(TWI0, TWCK, BOARD_MCK);
-  TWID_Initialize(&twid, TWI0);
-}
 
-// Wire.h read and write protocols
-void LSM9DS1::I2CwriteByte(uint8_t address, uint8_t subAddress, uint8_t data) {
-  // TODO (andres.calderon): Handle timeouts, handle errors
-  TWID_Write(&twid, address, subAddress, 1, &data, 1, 0);
-}
 
-uint8_t LSM9DS1::I2CreadByte(uint8_t address, uint8_t subAddress) {
-  // TODO (andres.calderon): Handle timeouts, handle errors
-  uint8_t data;
-  if (TWID_Read(&twid, address, subAddress, 1, &data, 1, 0) == 0) return data;
-  return 255;
-}
-
-uint8_t LSM9DS1::I2CreadBytes(uint8_t address, uint8_t subAddress,
-                              uint8_t* dest, uint8_t count) {
-  // TODO (andres.calderon): Handle timeouts, handle errors
-  if (TWID_Read(&twid, address, subAddress, 1, dest, count, 0) == 0) {
-    return count;
-  }
-  return -1;
-}

@@ -22,16 +22,11 @@ Distributed as-is; no warranty is given.
 #ifndef __SparkFunLSM9DS1_H__
 #define __SparkFunLSM9DS1_H__
 
-#include "pio.h"
-#include "atmel_twi.h"
-#include "atmel_twid.h"
+#include "./i2c.h"
 
 #include "lsm9ds1_types.h"
 #include "lsm9ds1_registers.h"
 
-/** TWI clock frequency in Hz. */
-#define TWCK 400000
-#define BOARD_MCK 48000000
 
 #define LSM9DS1_AG_ADDR(sa0) ((sa0) == 0 ? 0x6A : 0x6B)
 #define LSM9DS1_M_ADDR(sa1) ((sa1) == 0 ? 0x1C : 0x1E)
@@ -71,8 +66,8 @@ class LSM9DS1 {
   //				If IMU_MODE_SPI, this is the cs pin of the
   // magnetometer
   //(CS_M)
-  LSM9DS1(interface_mode interface, uint8_t xgAddr, uint8_t mAddr);
-  LSM9DS1();
+  LSM9DS1(creator::I2C* i2c, interface_mode interface, uint8_t xgAddr, uint8_t mAddr);
+  LSM9DS1(creator::I2C* i2c);
 
   // begin() -- Initialize the gyro, accelerometer, and magnetometer.
   // This will set up the scale and output rate of each sensor. The values set
@@ -500,7 +495,7 @@ class LSM9DS1 {
                        uint8_t count);
 
  private:
-  Twid twid;
+  creator::I2C* i2c_;
 };
 
 #endif  // SFE_LSM9DS1_H //

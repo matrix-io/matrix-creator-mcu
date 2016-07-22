@@ -28,9 +28,14 @@
 #include <string.h>
 #include <mcuconf.h>
 
+#include "./i2c.h"
+
 extern "C" {
 #include "atmel_psram.h"
 }
+
+/* Global objects */
+creator::I2C i2c; // TODO(andres.calderon@admobilize.com): avoid global objects
 
 static WORKING_AREA(waBlinkThread, 128);
 static msg_t BlinkThread(void *arg) {
@@ -57,9 +62,12 @@ static void WriteToPSRAM(const char *src, char *ram, int len) {
   }
 }
 
+
+
 static WORKING_AREA(waIMUThread, 1024);
 static msg_t IMUThread(void *arg) {
   (void)arg;
+
 
   register char *psram = (char *)PSRAM_BASE_ADDRESS;
 
@@ -69,13 +77,9 @@ static msg_t IMUThread(void *arg) {
   /* complete SMC configuration between PSRAM and SMC waveforms.*/
   BOARD_ConfigurePSRAM(SMC);
 
-  LSM9DS1 imu(IMU_MODE_I2C, 0x6A, 0x1C);
+  LSM9DS1 imu(&i2c, IMU_MODE_I2C, 0x6A, 0x1C);
 
   imu.begin();
-
-  /*
-    http://www.chibios.org/dokuwiki/doku.php?id=chibios:kb:timing
-  */
 
   systime_t time = chTimeNow();  // T0
 
@@ -125,6 +129,8 @@ int main(void) {
   halInit();
 
   chSysInit();
+
+  i2c.Init();
 
   /* Creates the blinker thread. */
   chThdCreateStatic(waBlinkThread, sizeof(waBlinkThread), NORMALPRIO,

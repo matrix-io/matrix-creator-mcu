@@ -72,7 +72,9 @@ CSRC = $(PORTSRC) \
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
-CPPSRC = lsm9ds1.cpp \
+CPPSRC = i2c.cpp \
+         lsm9ds1.cpp \
+         mpl3115a2.cpp \
          main.cpp
 
 # C sources to be compiled in ARM mode regardless of the global setting.
