@@ -19,7 +19,7 @@
  */
 
 #include "ch.h"
-#include "mpl3115a2.h"
+#include "./mpl3115a2.h"
 
 namespace creator {
 

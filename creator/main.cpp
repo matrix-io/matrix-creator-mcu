@@ -21,14 +21,16 @@
 #include "ch.h"
 #include "hal.h"
 #include "board.h"
-#include "lsm9ds1.h"
-#include "sensors_data.h"
 
 #include <math.h>
 #include <string.h>
 #include <mcuconf.h>
 
 #include "./i2c.h"
+#include "./sensors_data.h"
+#include "./mpl3115a2.h"
+#include "./lsm9ds1.h"
+
 
 extern "C" {
 #include "atmel_psram.h"
