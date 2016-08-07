@@ -44,7 +44,7 @@ static msg_t BlinkThread(void *arg) {
   (void)arg;
   while (TRUE) {
     palClearPad(IOPORT3, 17);
-    chThdSleepMilliseconds(500);
+    chThdSleepMilliseconds(50);
     palSetPad(IOPORT3, 17);
     chThdSleepMilliseconds(1);
   }
@@ -83,29 +83,23 @@ static msg_t IMUThread(void *arg) {
 
   imu.begin();
 
-  systime_t time = chTimeNow();  // T0
-
   IMUData data;
   while (TRUE) {
-    time += MS2ST(100);  // Next deadline
 
-    chThdSleepMicroseconds(1);
     imu.readGyro();
     data.gyro_x = imu.calcGyro(imu.gx);
     data.gyro_y = imu.calcGyro(imu.gy);
     data.gyro_z = imu.calcGyro(imu.gz);
 
-    chThdSleepMicroseconds(1);
     imu.readMag();
     data.mag_x = imu.calcMag(imu.mx);
     data.mag_y = imu.calcMag(imu.my);
     data.mag_z = imu.calcMag(imu.mz);
 
-    chThdSleepMicroseconds(1);
     imu.readAccel();
-    data.accel_x = imu.calcMag(imu.ax);
-    data.accel_y = imu.calcMag(imu.ay);
-    data.accel_z = imu.calcMag(imu.az);
+    data.accel_x = imu.calcAccel(imu.ax);
+    data.accel_y = imu.calcAccel(imu.ay);
+    data.accel_z = imu.calcAccel(imu.az); 
 
     data.yaw = atan2(data.mag_y, -data.mag_x);
     data.roll = atan2(data.accel_y, data.accel_z);
@@ -119,7 +113,7 @@ static msg_t IMUThread(void *arg) {
 
     WriteToPSRAM((const char *)&data, &psram[mem_offset_imu], sizeof(data));
 
-    chThdSleepUntil(time);
+    chThdSleepMilliseconds(20);
   }
   return (0);
 }
@@ -143,4 +137,4 @@ int main(void) {
                     NULL);
 
   return (0);
-}
+} 
