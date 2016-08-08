@@ -52,10 +52,10 @@ static msg_t BlinkThread(void *arg) {
 }
 
 static void Write4bytesToPSRAM(const char *src, char *ram) {
-  ram[0] = src[1];
-  ram[1] = src[0];
-  ram[2] = src[3];
-  ram[3] = src[2];  // swapping bytes...
+  ram[0] = src[0];
+  ram[1] = src[1];
+  ram[2] = src[2];
+  ram[3] = src[3];  // swapping bytes...
 }
 
 static void WriteToPSRAM(const char *src, char *ram, int len) {

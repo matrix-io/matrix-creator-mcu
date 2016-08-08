@@ -177,11 +177,9 @@
 #define PMC_SETUP       1               // Reset values:
 #define PMC_SCER_Val    0x00000000      // WO register (0x00000001)
 #define PMC_PCER_Val    0x00001C00      // WO register (0x00000000)
-//#define CKGR_MOR_Val    0x0037082A      //
-#define CKGR_MOR_Val    0x01370809
-//#define CKGR_PLLR_Val   0x200F8601      // 0x00003F00
-#define CKGR_PLLR_Val   0x20180006     // 0x00003F00
-#define PMC_MCKR_Val    0x00000001 //0x00000022      // 0x00000001
+#define CKGR_MOR_Val    0x01370809      // Main Cristal Oscillator is selected
+#define CKGR_PLLR_Val   0x20200003      // 0x00003F00
+#define PMC_MCKR_Val    0x00000012      // PLLA Clock is selected
 #define PMC_PCK0_Val    0x00000000      // 0x00000000
 #define PMC_PCK1_Val    0x00000000      // 0x00000000
 #define PMC_PCK2_Val    0x00000000      // 0x00000000
@@ -255,7 +253,7 @@
 /*----------------------------------------------------------------------------
   Define clocks
  *----------------------------------------------------------------------------*/
-#define XTAL        (24000000UL)        /* Crystal frequency                  */
+#define XTAL        (12000000UL)        /* Crystal frequency                  */
 #define XTAL32      (   32768UL)        /* 32k crystal frequency              */
 #define OSC_CLK     (      XTAL)        /* Main oscillator frequency          */
 #define OSC32_CLK   (    XTAL32)        /* 32k oscillator frequency           */
