@@ -29,7 +29,7 @@ namespace creator {
 /** TWI clock frequency in Hz. */
 #define TWCK 400000
 
-#define BOARD_MCK 48000000
+#define BOARD_MCK 64000000
 
 static const Pin pins[] = {PIN_TWD0, PIN_TWCK0};
 
