@@ -18,32 +18,33 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef CPP_CREATOR_MPL3115A2_H_
+#define CPP_CREATOR_MPL3115A2_H_
 
-#ifndef CPP_CREATOR_I2C_H_
-#define CPP_CREATOR_I2C_H_
-
-#include "ch.h"
 #include "chtypes.h"
 #include "atmel_twid.h"
 
+#include "./i2c.h"
+
 namespace creator {
 
-class I2C {
+class HTS221 {
  public:
-  void Init();
+  HTS221(I2C* i2c, uint8_t address = 0x5F);
+  bool Begin();
+  void GetData(float& humidity, float& temperature);
 
-  void WriteByte(uint8_t address, uint8_t subAddress, uint8_t data);
+ private:
+  void Write(uint8_t a, uint8_t d);
+  uint8_t Read(uint8_t a);
+  uint8_t Read(uint8_t a, uint8_t* data, uint8_t size);
 
-  uint8_t ReadByte(uint8_t address, uint8_t subAddress);
-
-  uint8_t ReadBytes(uint8_t address, uint8_t subAddress,
-                    uint8_t* dest, uint8_t count);
-
-  private:
-  Twid twid_;
-  Mutex mtx_;
+  uint8_t mode_;
+  I2C* i2c_;
+  uint8_t address_;
+  int32_t H0, H1, H2, H3;
+  int32_t T0, T1, T2, T3;
 };
+
 };      // namespace creator
 #endif  // CPP_CREATOR_I2C_H_
-
-
