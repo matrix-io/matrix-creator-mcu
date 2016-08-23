@@ -18,8 +18,8 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CPP_CREATOR_MPL3115A2_H_
-#define CPP_CREATOR_MPL3115A2_H_
+#ifndef CPP_CREATOR_HTS221_H_
+#define CPP_CREATOR_HTS221_H_
 
 #include "chtypes.h"
 #include "atmel_twid.h"

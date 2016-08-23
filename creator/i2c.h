@@ -18,7 +18,6 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #ifndef CPP_CREATOR_I2C_H_
 #define CPP_CREATOR_I2C_H_
 
@@ -36,14 +35,11 @@ class I2C {
 
   uint8_t ReadByte(uint8_t address, uint8_t subAddress);
 
-  uint8_t ReadBytes(uint8_t address, uint8_t subAddress,
-                    uint8_t* dest, uint8_t count);
+  uint8_t ReadBytes(uint8_t address, uint8_t subAddress, uint8_t* dest,
+                    uint8_t count);
 
-  private:
+ private:
   Twid twid_;
-  Mutex mtx_;
 };
 };      // namespace creator
 #endif  // CPP_CREATOR_I2C_H_
-
-

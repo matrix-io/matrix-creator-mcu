@@ -21,7 +21,6 @@
 #include "pio.h"
 #include "atmel_twi.h"
 
-
 #include "./i2c.h"
 
 namespace creator {
@@ -34,45 +33,45 @@ namespace creator {
 static const Pin pins[] = {PIN_TWD0, PIN_TWCK0};
 
 void I2C::Init() {
-  chMtxInit (&mtx_);
   /* Configure TWI */
-  chMtxLock(&mtx_);
+  chSysLock();
   PIO_Configure(pins, PIO_LISTSIZE(pins));
   PMC->PMC_WPMR = 0x504D4300; /* Disable write protect */
   PMC->PMC_PCER0 = 1 << ID_TWI0;
   PMC->PMC_WPMR = 0x504D4301; /* Enable write protect */
   TWI_ConfigureMaster(TWI0, TWCK, BOARD_MCK);
   TWID_Initialize(&twid_, TWI0);
-  chMtxUnlock();
+  chSysUnlock();
 }
-
 
 void I2C::WriteByte(uint8_t address, uint8_t subAddress, uint8_t data) {
   // TODO (andres.calderon): Handle timeouts, handle errors
-  chMtxLock(&mtx_);
+  chSysLock();
   TWID_Write(&twid_, address, subAddress, 1, &data, 1, 0);
-  chMtxUnlock();
+  chSysUnlock();
 }
 
 uint8_t I2C::ReadByte(uint8_t address, uint8_t subAddress) {
   // TODO (andres.calderon): Handle timeouts, handle errors
-  chMtxLock(&mtx_);
+  chSysLock();
+  uint8_t ret;
   uint8_t data;
-  if (TWID_Read(&twid_, address, subAddress, 1, &data, 1, 0) == 0) return data;
-  chMtxUnlock();
-  return 255;
+
+  if (TWID_Read(&twid_, address, subAddress, 1, &data, 1, 0) == 0) ret = data;
+  chSysUnlock();
+  return ret;
 }
 
-uint8_t I2C::ReadBytes(uint8_t address, uint8_t subAddress,
-                              uint8_t* dest, uint8_t count) {
-  uint8_t ret=0;
-  chMtxLock(&mtx_);
+uint8_t I2C::ReadBytes(uint8_t address, uint8_t subAddress, uint8_t* dest,
+                       uint8_t count) {
+  chSysLock();
+  uint8_t ret = 0;
   // TODO (andres.calderon): Handle timeouts, handle errors
   if (TWID_Read(&twid_, address, subAddress, 1, dest, count, 0) == 0) {
     ret = count;
   }
-  chMtxUnlock();
+  chSysUnlock();
   return ret;
 }
 
-};      // namespace creator
+};  // namespace creator

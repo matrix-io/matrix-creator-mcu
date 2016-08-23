@@ -27,7 +27,6 @@ Distributed as-is; no warranty is given.
 #include "lsm9ds1_types.h"
 #include "lsm9ds1_registers.h"
 
-
 #define LSM9DS1_AG_ADDR(sa0) ((sa0) == 0 ? 0x6A : 0x6B)
 #define LSM9DS1_M_ADDR(sa1) ((sa1) == 0 ? 0x1C : 0x1E)
 
@@ -66,7 +65,8 @@ class LSM9DS1 {
   //				If IMU_MODE_SPI, this is the cs pin of the
   // magnetometer
   //(CS_M)
-  LSM9DS1(creator::I2C* i2c, interface_mode interface, uint8_t xgAddr, uint8_t mAddr);
+  LSM9DS1(creator::I2C* i2c, interface_mode interface, uint8_t xgAddr,
+          uint8_t mAddr);
   LSM9DS1(creator::I2C* i2c);
 
   // begin() -- Initialize the gyro, accelerometer, and magnetometer.

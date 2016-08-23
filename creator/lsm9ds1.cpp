@@ -29,11 +29,13 @@ Distributed as-is; no warranty is given.
 
 float magSensitivity[4] = {0.00014, 0.00029, 0.00043, 0.00058};
 
-LSM9DS1::LSM9DS1(creator::I2C* i2c) :i2c_(i2c) {
+LSM9DS1::LSM9DS1(creator::I2C* i2c) : i2c_(i2c) {
   init(IMU_MODE_I2C, LSM9DS1_AG_ADDR(1), LSM9DS1_M_ADDR(1));
 }
 
-LSM9DS1::LSM9DS1(creator::I2C* i2c, interface_mode interface, uint8_t xgAddr, uint8_t mAddr) : i2c_(i2c) {
+LSM9DS1::LSM9DS1(creator::I2C* i2c, interface_mode interface, uint8_t xgAddr,
+                 uint8_t mAddr)
+    : i2c_(i2c) {
   init(interface, xgAddr, mAddr);
 }
 
@@ -137,7 +139,6 @@ uint16_t LSM9DS1::begin() {
   calcgRes();  // Calculate DPS / ADC tick, stored in gRes variable
   calcmRes();  // Calculate Gs / ADC tick, stored in mRes variable
   calcaRes();  // Calculate g / ADC tick, stored in aRes variable
-
 
   // To verify communication, we can read from the WHO_AM_I register of
   // each device. Store those in a variable so we can return them.
@@ -905,7 +906,3 @@ uint8_t LSM9DS1::mReadByte(uint8_t subAddress) {
 void LSM9DS1::mReadBytes(uint8_t subAddress, uint8_t* dest, uint8_t count) {
   i2c_->ReadBytes(_mAddress, subAddress, dest, count);
 }
-
-
-
-

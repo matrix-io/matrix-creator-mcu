@@ -142,6 +142,4 @@ float MPL3115A2::GetTemperature() {
 uint8_t MPL3115A2::Read(uint8_t a) { return i2c_->ReadByte(address_, a); }
 
 void MPL3115A2::Write(uint8_t a, uint8_t d) { i2c_->WriteByte(address_, a, d); }
-
-
 };

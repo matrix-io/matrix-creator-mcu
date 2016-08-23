@@ -30,62 +30,85 @@
 #include "./sensors_data.h"
 #include "./mpl3115a2.h"
 #include "./lsm9ds1.h"
-
+#include "./hts221.h"
 
 extern "C" {
 #include "atmel_psram.h"
 }
 
 /* Global objects */
-creator::I2C i2c; // TODO(andres.calderon@admobilize.com): avoid global objects
+creator::I2C i2c;  // TODO(andres.calderon@admobilize.com): avoid global objects
 
 static WORKING_AREA(waBlinkThread, 128);
 static msg_t BlinkThread(void *arg) {
   (void)arg;
-  while (TRUE) {
-    palClearPad(IOPORT3, 17);
-    chThdSleepMilliseconds(50);
+
+  systime_t time = chTimeNow();
+  while (true) {
+    time += MS2ST(1000);
+
     palSetPad(IOPORT3, 17);
     chThdSleepMilliseconds(1);
+    palClearPad(IOPORT3, 17);
+
+    chThdSleepUntil(time);
   }
   return (0);
 }
 
-static void Write4bytesToPSRAM(const char *src, char *ram) {
-  ram[0] = src[0];
-  ram[1] = src[1];
-  ram[2] = src[2];
-  ram[3] = src[3];  // swapping bytes...
-}
-
-static void WriteToPSRAM(const char *src, char *ram, int len) {
-  for (int offset = 0; offset < len; offset = offset + 4) {
-    Write4bytesToPSRAM((const char *)(&src[offset]), (char *)(&ram[offset]));
-  }
-}
-
-
-
-static WORKING_AREA(waIMUThread, 1024);
-static msg_t IMUThread(void *arg) {
+static WORKING_AREA(waHumThread, 1024);
+static msg_t HumThread(void *arg) {
   (void)arg;
 
+  creator::HTS221 hts221(&i2c);
 
   register char *psram = (char *)PSRAM_BASE_ADDRESS;
 
-  /* Configure EBI I/O for psram connection*/
-  PIO_Configure(pinPsram, PIO_LISTSIZE(pinPsram));
+  hts221.Begin();
 
-  /* complete SMC configuration between PSRAM and SMC waveforms.*/
-  BOARD_ConfigurePSRAM(SMC);
+  HumidityData data;
 
+  systime_t time = chTimeNow();  // T0
+  while (true) {
+    time += MS2ST(1000);  // Next deadline
+    hts221.GetData(data.humidity, data.temperature);
+    memcpy((void *)&psram[mem_offset_humidity], (void *)&data, sizeof(data));
+    chThdSleepUntil(time);
+  }
+  return (0);
+}
+
+static WORKING_AREA(waPressThread, 1024);
+static msg_t PressThread(void *arg) {
+  (void)arg;
+  creator::MPL3115A2 mpl3115a2(&i2c);
+  register char *psram = (char *)PSRAM_BASE_ADDRESS;
+  mpl3115a2.Begin();
+  PressureData data;
+  systime_t time = chTimeNow();
+
+  while (true) {
+    time += MS2ST(200);
+    data.pressure = mpl3115a2.GetPressure();
+    data.temperature = mpl3115a2.GetTemperature();
+
+    memcpy((void *)&psram[mem_offset_press], (void *)&data, sizeof(data));
+    chThdSleepUntil(time);
+  }
+  return (0);
+}
+
+static WORKING_AREA(waIMUThread, 1024);
+static msg_t IMUThread(void *arg) {
   LSM9DS1 imu(&i2c, IMU_MODE_I2C, 0x6A, 0x1C);
+
+  register char *psram = (char *)PSRAM_BASE_ADDRESS;
 
   imu.begin();
 
   IMUData data;
-  while (TRUE) {
 
+  while (true) {
     imu.readGyro();
     data.gyro_x = imu.calcGyro(imu.gx);
     data.gyro_y = imu.calcGyro(imu.gy);
@@ -99,19 +122,18 @@ static msg_t IMUThread(void *arg) {
     imu.readAccel();
     data.accel_x = imu.calcAccel(imu.ax);
     data.accel_y = imu.calcAccel(imu.ay);
-    data.accel_z = imu.calcAccel(imu.az); 
+    data.accel_z = imu.calcAccel(imu.az);
 
     data.yaw = atan2(data.mag_y, -data.mag_x);
     data.roll = atan2(data.accel_y, data.accel_z);
     data.pitch = atan2(-data.accel_x, sqrt(data.accel_y * data.accel_y +
                                            data.accel_z * data.accel_z));
-
     // Convert everything from radians to degrees:
     data.pitch *= 180.0 / M_PI;
     data.roll *= 180.0 / M_PI;
     data.yaw *= 180.0 / M_PI;
 
-    WriteToPSRAM((const char *)&data, &psram[mem_offset_imu], sizeof(data));
+    memcpy((void *)&psram[mem_offset_imu], (void *)&data, sizeof(data));
 
     chThdSleepMilliseconds(20);
   }
@@ -126,6 +148,12 @@ int main(void) {
 
   chSysInit();
 
+  /* Configure EBI I/O for psram connection*/
+  PIO_Configure(pinPsram, PIO_LISTSIZE(pinPsram));
+
+  /* complete SMC configuration between PSRAM and SMC waveforms.*/
+  BOARD_ConfigurePSRAM(SMC);
+
   i2c.Init();
 
   /* Creates the blinker thread. */
@@ -136,5 +164,12 @@ int main(void) {
   chThdCreateStatic(waIMUThread, sizeof(waIMUThread), NORMALPRIO, IMUThread,
                     NULL);
 
+  /* Creates the hum thread. */
+  chThdCreateStatic(waHumThread, sizeof(waHumThread), NORMALPRIO, HumThread,
+                    NULL);
+
+  /* Creates the hum thread. */
+  chThdCreateStatic(waPressThread, sizeof(waPressThread), NORMALPRIO,
+                    PressThread, NULL);
   return (0);
-} 
+}
