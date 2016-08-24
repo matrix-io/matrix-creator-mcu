@@ -46,7 +46,7 @@ PROJECT = ch
 
 # Imported source files
 CHIBIOS = ../third_party/ChibiOS
-include $(CHIBIOS)/boards/ATMEL_SAM3S_EK/board.mk
+include $(CHIBIOS)/boards/ATMEL_SAM3S_CREATOR/board.mk
 include $(CHIBIOS)/os/hal/platforms/AT91SAM3S/platform.mk
 include $(CHIBIOS)/os/hal/hal.mk
 include $(CHIBIOS)/os/ports/GCC/ARMCMx/AT91SAM3S/port.mk

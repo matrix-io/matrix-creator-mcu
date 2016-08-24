@@ -69,6 +69,9 @@
 #elif (SAM3_PLATFORM == SAM3S4C)
 #define sam3s4
 #include "at91lib/SAM3S.h"
+#elif (SAM3_PLATFORM == SAM3S2C)
+#define sam3s2
+#include "at91lib/SAM3S.h"
 #elif (SAM3_PLATFORM == SAM3U4E)
 #include "at91lib/SAM3U.h"
 #else

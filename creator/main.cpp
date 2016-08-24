@@ -39,6 +39,14 @@ extern "C" {
 /* Global objects */
 creator::I2C i2c;  // TODO(andres.calderon@admobilize.com): avoid global objects
 
+void psram_copy(uint8_t mem_offset, char *data, uint8_t len) {
+  register char *psram = (char *)PSRAM_BASE_ADDRESS;
+
+  for (int i = 0; i < len; i++) {
+    psram[mem_offset + i] = data[i];
+  }
+}
+
 static WORKING_AREA(waBlinkThread, 128);
 static msg_t BlinkThread(void *arg) {
   (void)arg;
@@ -56,13 +64,11 @@ static msg_t BlinkThread(void *arg) {
   return (0);
 }
 
-static WORKING_AREA(waHumThread, 1024);
+static WORKING_AREA(waHumThread, 256);
 static msg_t HumThread(void *arg) {
   (void)arg;
 
   creator::HTS221 hts221(&i2c);
-
-  register char *psram = (char *)PSRAM_BASE_ADDRESS;
 
   hts221.Begin();
 
@@ -72,17 +78,17 @@ static msg_t HumThread(void *arg) {
   while (true) {
     time += MS2ST(1000);  // Next deadline
     hts221.GetData(data.humidity, data.temperature);
-    memcpy((void *)&psram[mem_offset_humidity], (void *)&data, sizeof(data));
+    psram_copy(mem_offset_humidity, (char *)&data, sizeof(data));
     chThdSleepUntil(time);
   }
   return (0);
 }
 
-static WORKING_AREA(waPressThread, 1024);
+static WORKING_AREA(waPressThread, 256);
 static msg_t PressThread(void *arg) {
   (void)arg;
   creator::MPL3115A2 mpl3115a2(&i2c);
-  register char *psram = (char *)PSRAM_BASE_ADDRESS;
+
   mpl3115a2.Begin();
   PressureData data;
   systime_t time = chTimeNow();
@@ -92,17 +98,15 @@ static msg_t PressThread(void *arg) {
     data.pressure = mpl3115a2.GetPressure();
     data.temperature = mpl3115a2.GetTemperature();
 
-    memcpy((void *)&psram[mem_offset_press], (void *)&data, sizeof(data));
+    psram_copy(mem_offset_press, (char *)&data, sizeof(data));
     chThdSleepUntil(time);
   }
   return (0);
 }
 
-static WORKING_AREA(waIMUThread, 1024);
+static WORKING_AREA(waIMUThread, 512);
 static msg_t IMUThread(void *arg) {
   LSM9DS1 imu(&i2c, IMU_MODE_I2C, 0x6A, 0x1C);
-
-  register char *psram = (char *)PSRAM_BASE_ADDRESS;
 
   imu.begin();
 
@@ -124,16 +128,13 @@ static msg_t IMUThread(void *arg) {
     data.accel_y = imu.calcAccel(imu.ay);
     data.accel_z = imu.calcAccel(imu.az);
 
-    data.yaw = atan2(data.mag_y, -data.mag_x);
-    data.roll = atan2(data.accel_y, data.accel_z);
+    data.yaw = atan2(data.mag_y, -data.mag_x) * 180.0 / M_PI;
+    data.roll = atan2(data.accel_y, data.accel_z) * 180.0 / M_PI;
     data.pitch = atan2(-data.accel_x, sqrt(data.accel_y * data.accel_y +
-                                           data.accel_z * data.accel_z));
-    // Convert everything from radians to degrees:
-    data.pitch *= 180.0 / M_PI;
-    data.roll *= 180.0 / M_PI;
-    data.yaw *= 180.0 / M_PI;
+                                           data.accel_z * data.accel_z)) *
+                 180.0 / M_PI;
 
-    memcpy((void *)&psram[mem_offset_imu], (void *)&data, sizeof(data));
+    psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
 
     chThdSleepMilliseconds(20);
   }
@@ -163,13 +164,13 @@ int main(void) {
   /* Creates the imu thread. */
   chThdCreateStatic(waIMUThread, sizeof(waIMUThread), NORMALPRIO, IMUThread,
                     NULL);
-
   /* Creates the hum thread. */
   chThdCreateStatic(waHumThread, sizeof(waHumThread), NORMALPRIO, HumThread,
                     NULL);
-
+#if 0
   /* Creates the hum thread. */
   chThdCreateStatic(waPressThread, sizeof(waPressThread), NORMALPRIO,
                     PressThread, NULL);
+#endif
   return (0);
 }
