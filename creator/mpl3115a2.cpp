@@ -19,43 +19,23 @@
  */
 
 #include "ch.h"
+#include "hal.h"
 #include "./mpl3115a2.h"
 
 namespace creator {
 
-const uint8_t MPL3115A2_REGISTER_STATUS = 0x00;
-const uint8_t MPL3115A2_REGISTER_STATUS_TDR = 0x02;
-const uint8_t MPL3115A2_REGISTER_STATUS_PDR = 0x04;
-const uint8_t MPL3115A2_REGISTER_STATUS_PTDR = 0x08;
-
 const uint8_t MPL3115A2_CTRL_REG1 = 0x26;
-const uint8_t MPL3115A2_CTRL_REG1_SBYB = 0x01;
-const uint8_t MPL3115A2_CTRL_REG1_OST = 0x02;
-const uint8_t MPL3115A2_CTRL_REG1_RST = 0x04;
-const uint8_t MPL3115A2_CTRL_REG1_OS1 = 0x00;
-const uint8_t MPL3115A2_CTRL_REG1_OS2 = 0x08;
-const uint8_t MPL3115A2_CTRL_REG1_OS4 = 0x10;
-const uint8_t MPL3115A2_CTRL_REG1_OS8 = 0x18;
-const uint8_t MPL3115A2_CTRL_REG1_OS16 = 0x20;
-const uint8_t MPL3115A2_CTRL_REG1_OS32 = 0x28;
-const uint8_t MPL3115A2_CTRL_REG1_OS64 = 0x30;
-const uint8_t MPL3115A2_CTRL_REG1_OS128 = 0x38;
-const uint8_t MPL3115A2_CTRL_REG1_RAW = 0x40;
-const uint8_t MPL3115A2_CTRL_REG1_ALT = 0x80;
-const uint8_t MPL3115A2_CTRL_REG1_BAR = 0x00;
-
-const uint8_t MPL3115A2_WHOAMI = 0x0C;
-
 const uint8_t MPL3115A2_PT_DATA_CFG = 0x13;
-const uint8_t MPL3115A2_PT_DATA_CFG_TDEFE = 0x01;
-const uint8_t MPL3115A2_PT_DATA_CFG_PDEFE = 0x02;
-const uint8_t MPL3115A2_PT_DATA_CFG_DREM = 0x04;
-
+const uint8_t MPL3115A2_REGISTER_STATUS = 0x00;
+const uint8_t MPL3115A2_WHOAMI = 0x0C;
 const uint8_t MPL3115A2_REGISTER_PRESSURE_MSB = 0x01;
 const uint8_t MPL3115A2_REGISTER_TEMP_MSB = 0x04;
 
-MPL3115A2::MPL3115A2(I2C* i2c, uint8_t address)
-    : i2c_(i2c), address_(address) {}
+MPL3115A2::MPL3115A2(I2C* i2c, uint8_t address) : i2c_(i2c), address_(address) {
+  CTRL_REG1_.data = 0;
+  PT_DATA_CFG_.data = 0;
+  DR_STATUS_.data = 0;
+}
 
 bool MPL3115A2::Begin() {
   uint8_t whoami = Read(MPL3115A2_WHOAMI);
@@ -63,13 +43,16 @@ bool MPL3115A2::Begin() {
     return false;
   }
 
-  Write(MPL3115A2_CTRL_REG1, MPL3115A2_CTRL_REG1_SBYB |
-                                 MPL3115A2_CTRL_REG1_OS128 |
-                                 MPL3115A2_CTRL_REG1_ALT);
+  CTRL_REG1_.data = Read(MPL3115A2_CTRL_REG1);
 
-  Write(MPL3115A2_PT_DATA_CFG, MPL3115A2_PT_DATA_CFG_TDEFE |
-                                   MPL3115A2_PT_DATA_CFG_PDEFE |
-                                   MPL3115A2_PT_DATA_CFG_DREM);
+  CTRL_REG1_.fields.OS = 7;
+  Write(MPL3115A2_CTRL_REG1, CTRL_REG1_.data);
+
+  PT_DATA_CFG_.fields.DREM = 1;
+  PT_DATA_CFG_.fields.PDEFE = 1;
+  PT_DATA_CFG_.fields.TDEFE = 1;
+
+  Write(MPL3115A2_PT_DATA_CFG, PT_DATA_CFG_.data);
 
   return true;
 }
@@ -78,17 +61,22 @@ bool MPL3115A2::Begin() {
 float MPL3115A2::GetPressure() {
   uint32_t pressure;
 
-  Write(MPL3115A2_CTRL_REG1, MPL3115A2_CTRL_REG1_SBYB |
-                                 MPL3115A2_CTRL_REG1_OS128 |
-                                 MPL3115A2_CTRL_REG1_BAR);
+  CTRL_REG1_.data = Read(MPL3115A2_CTRL_REG1);
+  CTRL_REG1_.fields.OST = 0;
+  CTRL_REG1_.fields.ALT = 0;
+  Write(MPL3115A2_CTRL_REG1, CTRL_REG1_.data);
 
-  uint8_t sta = 0;
-  while (!(sta & MPL3115A2_REGISTER_STATUS_PDR)) {
-    sta = Read(MPL3115A2_REGISTER_STATUS);
-    chThdSleepMilliseconds(10);
+  CTRL_REG1_.data = Read(MPL3115A2_CTRL_REG1);
+  CTRL_REG1_.fields.OST = 1;
+  Write(MPL3115A2_CTRL_REG1, CTRL_REG1_.data);
+
+  // Read DR_STATUS PDR if Data is Available
+  while (true) {
+    DR_STATUS_.data = Read(MPL3115A2_REGISTER_STATUS);
+    if (DR_STATUS_.fields.PDR) break;
+    chThdSleepMilliseconds(100);
   }
-
-  int8_t data[3];
+  uint8_t data[3];
   i2c_->ReadBytes(address_, MPL3115A2_REGISTER_PRESSURE_MSB, (uint8_t*)data,
                   sizeof(data));
 
@@ -100,43 +88,51 @@ float MPL3115A2::GetPressure() {
 float MPL3115A2::GetAltitude() {
   int32_t altitude;
 
-  Write(MPL3115A2_CTRL_REG1, MPL3115A2_CTRL_REG1_SBYB |
-                                 MPL3115A2_CTRL_REG1_OS128 |
-                                 MPL3115A2_CTRL_REG1_ALT);
+  CTRL_REG1_.data = Read(MPL3115A2_CTRL_REG1);
+  CTRL_REG1_.fields.OST = 0;
+  CTRL_REG1_.fields.ALT = 1;
+  Write(MPL3115A2_CTRL_REG1, CTRL_REG1_.data);
 
-  uint8_t sta = 0;
-  while (!(sta & MPL3115A2_REGISTER_STATUS_PDR)) {
-    sta = Read(MPL3115A2_REGISTER_STATUS);
-    chThdSleepMilliseconds(10);
+  CTRL_REG1_.data = Read(MPL3115A2_CTRL_REG1);
+  CTRL_REG1_.fields.OST = 1;
+  Write(MPL3115A2_CTRL_REG1, CTRL_REG1_.data);
+
+  // Read DR_STATUS PDR if Data is Available
+  while (true) {
+    DR_STATUS_.data = Read(MPL3115A2_REGISTER_STATUS);
+    if (DR_STATUS_.fields.PDR) break;
+    chThdSleepMilliseconds(100);
   }
-
-  int8_t data[3];
+  uint8_t data[3];
   i2c_->ReadBytes(address_, MPL3115A2_REGISTER_PRESSURE_MSB, (uint8_t*)data,
                   sizeof(data));
 
   altitude = ((data[0] << 16) | (data[1] << 8) | data[2]) >> 4;
-
   if (altitude & 0x80000) altitude |= 0xFFF00000;
-
   return float(altitude) / 16.0;
 }
 
 /* Gets the temperature in °C */
 float MPL3115A2::GetTemperature() {
-  int32_t temp;
-  uint8_t sta = 0;
-  while (!(sta & MPL3115A2_REGISTER_STATUS_TDR)) {
-    sta = Read(MPL3115A2_REGISTER_STATUS);
-    chThdSleepMilliseconds(10);
-  }
+  CTRL_REG1_.data = Read(MPL3115A2_CTRL_REG1);
+  CTRL_REG1_.fields.OST = 0;
+  Write(MPL3115A2_CTRL_REG1, CTRL_REG1_.data);
 
-  int8_t data[2];
+  CTRL_REG1_.data = Read(MPL3115A2_CTRL_REG1);
+  CTRL_REG1_.fields.OST = 1;
+  Write(MPL3115A2_CTRL_REG1, CTRL_REG1_.data);
+
+  // Read DR_STATUS PDR if Data is Available
+  while (true) {
+    DR_STATUS_.data = Read(MPL3115A2_REGISTER_STATUS);
+    if (DR_STATUS_.fields.TDR) break;
+    chThdSleepMilliseconds(100);
+  }
+  uint8_t data[2];
   i2c_->ReadBytes(address_, MPL3115A2_REGISTER_TEMP_MSB, (uint8_t*)data,
                   sizeof(data));
 
-  temp = ((data[0] << 8) | data[1]) >> 4;
-
-  return float(temp) / 16.0;
+  return float(((data[0] << 8) | data[1]) >> 4) / 16.0;
 }
 
 uint8_t MPL3115A2::Read(uint8_t a) { return i2c_->ReadByte(address_, a); }

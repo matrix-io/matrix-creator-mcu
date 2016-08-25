@@ -84,11 +84,9 @@ static msg_t PressThread(void *arg) {
   PressureData data;
 
   while (true) {
-
     data.altitude = mpl3115a2.GetAltitude();
     data.pressure = mpl3115a2.GetPressure();
     data.temperature = mpl3115a2.GetTemperature();
-
     psram_copy(mem_offset_press, (char *)&data, sizeof(data));
   }
   return (0);
@@ -138,7 +136,7 @@ int main(void) {
   halInit();
 
   chSysInit();
-
+  sdStart(&SD1, NULL);
   /* Configure EBI I/O for psram connection*/
   PIO_Configure(pinPsram, PIO_LISTSIZE(pinPsram));
 
@@ -146,15 +144,12 @@ int main(void) {
   BOARD_ConfigurePSRAM(SMC);
 
   i2c.Init();
-
   /* Creates the imu thread. */
   chThdCreateStatic(waIMUThread, sizeof(waIMUThread), NORMALPRIO, IMUThread,
                     NULL);
-
   /* Creates the hum thread. */
   chThdCreateStatic(waHumThread, sizeof(waHumThread), NORMALPRIO, HumThread,
                     NULL);
-
   /* Creates the hum thread. */
   chThdCreateStatic(waPressThread, sizeof(waPressThread), NORMALPRIO,
                     PressThread, NULL);

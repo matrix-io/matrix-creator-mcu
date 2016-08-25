@@ -28,6 +28,45 @@
 
 namespace creator {
 
+union mpl3115a2_CTRL_REG1 {
+  uint8_t data;
+  struct fields_t {
+    uint8_t SBYB : 1;
+    uint8_t OST : 1;
+    uint8_t RST : 1;
+    uint8_t OS : 3;
+    uint8_t RAW : 1;
+    uint8_t ALT : 1;
+  };
+
+  fields_t fields;
+};
+
+union mpl3115a2_PT_DATA_CFG {
+  uint8_t data;
+  struct fields_t {
+    uint8_t TDEFE : 1;
+    uint8_t PDEFE : 1;
+    uint8_t DREM : 1;
+  };
+  fields_t fields;
+};
+
+union mpl3115a2_DR_STATUS {
+  uint8_t data;
+  struct fields_t {
+    uint8_t reserved0 : 1;
+    uint8_t TDR : 1;
+    uint8_t PDR : 1;
+    uint8_t PTDR : 1;
+    uint8_t reserved1 : 1;
+    uint8_t TOW : 1;
+    uint8_t POW : 1;
+    uint8_t PTOW : 1;
+  };
+  fields_t fields;
+};
+
 class MPL3115A2 {
  public:
   MPL3115A2(I2C* i2c, uint8_t address = 0x60);
@@ -42,6 +81,9 @@ class MPL3115A2 {
   uint8_t mode_;
   I2C* i2c_;
   uint8_t address_;
+  mpl3115a2_CTRL_REG1 CTRL_REG1_;
+  mpl3115a2_PT_DATA_CFG PT_DATA_CFG_;
+  mpl3115a2_DR_STATUS DR_STATUS_;
 };
 
 };      // namespace creator
