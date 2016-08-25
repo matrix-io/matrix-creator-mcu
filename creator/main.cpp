@@ -47,22 +47,6 @@ void psram_copy(uint8_t mem_offset, char *data, uint8_t len) {
   }
 }
 
-static WORKING_AREA(waBlinkThread, 128);
-static msg_t BlinkThread(void *arg) {
-  (void)arg;
-
-  systime_t time = chTimeNow();
-  while (true) {
-    time += MS2ST(1000);
-
-    palSetPad(IOPORT3, 17);
-    chThdSleepMilliseconds(1);
-    palClearPad(IOPORT3, 17);
-
-    chThdSleepUntil(time);
-  }
-  return (0);
-}
 
 static WORKING_AREA(waHumThread, 256);
 static msg_t HumThread(void *arg) {
@@ -76,7 +60,13 @@ static msg_t HumThread(void *arg) {
 
   systime_t time = chTimeNow();  // T0
   while (true) {
-    time += MS2ST(1000);  // Next deadline
+    time += MS2ST(1000);  
+
+    palSetPad(IOPORT3, 17);
+    chThdSleepMilliseconds(1);
+    palClearPad(IOPORT3, 17);
+
+
     hts221.GetData(data.humidity, data.temperature);
     psram_copy(mem_offset_humidity, (char *)&data, sizeof(data));
     chThdSleepUntil(time);
@@ -157,20 +147,14 @@ int main(void) {
 
   i2c.Init();
 
-  /* Creates the blinker thread. */
-  chThdCreateStatic(waBlinkThread, sizeof(waBlinkThread), NORMALPRIO,
-                    BlinkThread, NULL);
-
   /* Creates the imu thread. */
   chThdCreateStatic(waIMUThread, sizeof(waIMUThread), NORMALPRIO, IMUThread,
                     NULL);
   /* Creates the hum thread. */
   chThdCreateStatic(waHumThread, sizeof(waHumThread), NORMALPRIO, HumThread,
                     NULL);
-#if 0
   /* Creates the hum thread. */
   chThdCreateStatic(waPressThread, sizeof(waPressThread), NORMALPRIO,
                     PressThread, NULL);
-#endif
   return (0);
 }
