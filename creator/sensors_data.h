@@ -18,6 +18,7 @@ struct UVData {
 };
 
 struct PressureData {
+  float altitude;
   float pressure;
   float temperature;
 };

@@ -80,18 +80,16 @@ static msg_t PressThread(void *arg) {
   creator::MPL3115A2 mpl3115a2(&i2c);
 
   mpl3115a2.Begin();
+
   PressureData data;
-  systime_t time = chTimeNow();
 
   while (true) {
-    time += MS2ST(5000);
 
+    data.altitude = mpl3115a2.GetAltitude();
     data.pressure = mpl3115a2.GetPressure();
     data.temperature = mpl3115a2.GetTemperature();
 
     psram_copy(mem_offset_press, (char *)&data, sizeof(data));
-
-    chThdSleepUntil(time);
   }
   return (0);
 }
