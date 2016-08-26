@@ -31,6 +31,7 @@
 #include "./mpl3115a2.h"
 #include "./lsm9ds1.h"
 #include "./hts221.h"
+#include "./veml6070.h"
 
 extern "C" {
 #include "atmel_psram.h"
@@ -47,53 +48,45 @@ void psram_copy(uint8_t mem_offset, char *data, uint8_t len) {
   }
 }
 
-static WORKING_AREA(waHumThread, 256);
-static msg_t HumThread(void *arg) {
+static WORKING_AREA(waEnvThread, 256);
+static msg_t EnvThread(void *arg) {
   (void)arg;
 
   creator::HTS221 hts221(&i2c);
+  creator::MPL3115A2 mpl3115a2(&i2c);
+  creator::VEML6070 veml6070(&i2c);
 
   hts221.Begin();
+  mpl3115a2.Begin();
+  veml6070.Begin();
 
-  HumidityData data;
+  HumidityData hum;
+  PressureData press;
+  UVData uv;
 
-  systime_t time = chTimeNow();
   while (true) {
-    time += MS2ST(1000);
-
     palSetPad(IOPORT3, 17);
     chThdSleepMilliseconds(1);
     palClearPad(IOPORT3, 17);
 
-    hts221.GetData(data.humidity, data.temperature);
+    hts221.GetData(hum.humidity, hum.temperature);
+    psram_copy(mem_offset_humidity, (char *)&hum, sizeof(hum));
 
-    psram_copy(mem_offset_humidity, (char *)&data, sizeof(data));
+    press.altitude = mpl3115a2.GetAltitude();
+    press.pressure = mpl3115a2.GetPressure();
+    press.temperature = mpl3115a2.GetTemperature();
+    psram_copy(mem_offset_press, (char *)&press, sizeof(press));
 
-    chThdSleepUntil(time);
-  }
-  return (0);
-}
-
-static WORKING_AREA(waPressThread, 256);
-static msg_t PressThread(void *arg) {
-  (void)arg;
-  creator::MPL3115A2 mpl3115a2(&i2c);
-
-  mpl3115a2.Begin();
-
-  PressureData data;
-
-  while (true) {
-    data.altitude = mpl3115a2.GetAltitude();
-    data.pressure = mpl3115a2.GetPressure();
-    data.temperature = mpl3115a2.GetTemperature();
-    psram_copy(mem_offset_press, (char *)&data, sizeof(data));
+    uv.UV = veml6070.GetUV();
+    psram_copy(mem_offset_uv, (char *)&uv, sizeof(uv));
   }
   return (0);
 }
 
 static WORKING_AREA(waIMUThread, 512);
 static msg_t IMUThread(void *arg) {
+  (void)arg;
+
   LSM9DS1 imu(&i2c, IMU_MODE_I2C, 0x6A, 0x1C);
 
   imu.begin();
@@ -147,12 +140,9 @@ int main(void) {
   /* Creates the imu thread. */
   chThdCreateStatic(waIMUThread, sizeof(waIMUThread), NORMALPRIO, IMUThread,
                     NULL);
-  /* Creates the hum thread. */
-  chThdCreateStatic(waHumThread, sizeof(waHumThread), NORMALPRIO, HumThread,
+  /* Creates the Env thread. */
+  chThdCreateStatic(waEnvThread, sizeof(waEnvThread), NORMALPRIO, EnvThread,
                     NULL);
-  /* Creates the hum thread. */
-  chThdCreateStatic(waPressThread, sizeof(waPressThread), NORMALPRIO,
-                    PressThread, NULL);
 
   return (0);
 }

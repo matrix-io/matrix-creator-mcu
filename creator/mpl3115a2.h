@@ -78,7 +78,6 @@ class MPL3115A2 {
  private:
   void Write(uint8_t a, uint8_t d);
   uint8_t Read(uint8_t a);
-  uint8_t mode_;
   I2C* i2c_;
   uint8_t address_;
   mpl3115a2_CTRL_REG1 CTRL_REG1_;

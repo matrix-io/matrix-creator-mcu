@@ -51,6 +51,13 @@ void I2C::WriteByte(uint8_t address, uint8_t subAddress, uint8_t data) {
   chSysUnlock();
 }
 
+void I2C::WriteByte(uint8_t address, uint8_t data) {
+  // TODO (andres.calderon): Handle timeouts, handle errors
+  chSysLock();
+  TWID_Write(&twid_, address, 0, 0, &data, 1, 0);
+  chSysUnlock();
+}
+
 uint8_t I2C::ReadByte(uint8_t address, uint8_t subAddress) {
   // TODO (andres.calderon): Handle timeouts, handle errors
   chSysLock();
@@ -58,6 +65,17 @@ uint8_t I2C::ReadByte(uint8_t address, uint8_t subAddress) {
   uint8_t data;
 
   if (TWID_Read(&twid_, address, subAddress, 1, &data, 1, 0) == 0) ret = data;
+  chSysUnlock();
+  return ret;
+}
+
+uint8_t I2C::ReadByte(uint8_t address) {
+  // TODO (andres.calderon): Handle timeouts, handle errors
+  chSysLock();
+  uint8_t ret;
+  uint8_t data;
+
+  if (TWID_Read(&twid_, address, 0, 0, &data, 1, 0) == 0) ret = data;
   chSysUnlock();
   return ret;
 }

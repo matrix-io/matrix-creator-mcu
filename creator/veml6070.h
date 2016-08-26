@@ -18,30 +18,42 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CPP_CREATOR_I2C_H_
-#define CPP_CREATOR_I2C_H_
+#ifndef CPP_CREATOR_VEML6020_H_
+#define CPP_CREATOR_VEML6020_H_
 
-#include "ch.h"
 #include "chtypes.h"
 #include "atmel_twid.h"
 
+#include "./i2c.h"
+
 namespace creator {
 
-class I2C {
+union veml6070_CFG_REG 
+{
+  uint8_t data;
+  struct fields_t 
+  {
+    uint8_t SD:1;
+    uint8_t reserved0:1;
+    uint8_t IT:2;
+    uint8_t ACK_THD:1;
+    uint8_t ACK:1;
+    uint8_t reserbed1:1;
+  };
+  fields_t fields;
+};
+
+class VEML6070 {
  public:
-  void Init();
-
-  void WriteByte(uint8_t address, uint8_t subAddress, uint8_t data);
-
-  void WriteByte(uint8_t address, uint8_t data);
-
-  uint8_t ReadByte(uint8_t address, uint8_t subAddress);
-  uint8_t ReadByte(uint8_t address);
-  uint8_t ReadBytes(uint8_t address, uint8_t subAddress, uint8_t* dest,
-                    uint8_t count);
+  VEML6070(I2C* i2c);
+  bool Begin();
+  float GetUV();
 
  private:
-  Twid twid_;
+  I2C* i2c_;
+  veml6070_CFG_REG CFG_REG_;
+
 };
+
 };      // namespace creator
-#endif  // CPP_CREATOR_I2C_H_
+#endif  // CPP_CREATOR_VEML6020_H_

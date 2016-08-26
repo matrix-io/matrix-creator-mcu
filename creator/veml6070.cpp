@@ -18,30 +18,35 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CPP_CREATOR_I2C_H_
-#define CPP_CREATOR_I2C_H_
-
 #include "ch.h"
-#include "chtypes.h"
-#include "atmel_twid.h"
+#include "hal.h"
+#include "./veml6070.h"
+
+const uint8_t VEML6070_ADDR_1 = 0x38;
+const uint8_t VEML6070_ADDR_2 = 0x39;
 
 namespace creator {
 
-class I2C {
- public:
-  void Init();
+VEML6070::VEML6070(I2C* i2c) : i2c_(i2c) {
+  CFG_REG_.data = 0x00;
+}
 
-  void WriteByte(uint8_t address, uint8_t subAddress, uint8_t data);
+bool VEML6070::Begin() {
+  
+  CFG_REG_.fields.reserved0 = 1;
+  CFG_REG_.fields.ACK = 0 ;
+  CFG_REG_.fields.IT = 3 ;
+  i2c_->WriteByte(VEML6070_ADDR_1 ,CFG_REG_.data);
+  return true;
+}
 
-  void WriteByte(uint8_t address, uint8_t data);
-
-  uint8_t ReadByte(uint8_t address, uint8_t subAddress);
-  uint8_t ReadByte(uint8_t address);
-  uint8_t ReadBytes(uint8_t address, uint8_t subAddress, uint8_t* dest,
-                    uint8_t count);
-
- private:
-  Twid twid_;
+float VEML6070::GetUV() {
+  uint8_t data[2];
+  data[0] = i2c_->ReadByte(VEML6070_ADDR_2);
+  data[1] = i2c_->ReadByte(VEML6070_ADDR_1);
+  
+  return float (data[0] << 8 | data[1])/11.0;  
+}
+  
 };
-};      // namespace creator
-#endif  // CPP_CREATOR_I2C_H_
+
