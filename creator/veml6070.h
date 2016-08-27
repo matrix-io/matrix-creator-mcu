@@ -22,7 +22,6 @@
 #define CPP_CREATOR_VEML6020_H_
 
 #include "chtypes.h"
-#include "atmel_twid.h"
 
 #include "./i2c.h"
 

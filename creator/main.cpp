@@ -64,7 +64,11 @@ static msg_t EnvThread(void *arg) {
   PressureData press;
   UVData uv;
 
+  systime_t time = chTimeNow();
+
   while (true) {
+    time += MS2ST(2000);
+
     palSetPad(IOPORT3, 17);
     chThdSleepMilliseconds(1);
     palClearPad(IOPORT3, 17);
@@ -79,6 +83,8 @@ static msg_t EnvThread(void *arg) {
 
     uv.UV = veml6070.GetUV();
     psram_copy(mem_offset_uv, (char *)&uv, sizeof(uv));
+
+    chThdSleepUntil(time);
   }
   return (0);
 }
@@ -129,7 +135,7 @@ int main(void) {
   halInit();
 
   chSysInit();
-  sdStart(&SD1, NULL);
+
   /* Configure EBI I/O for psram connection*/
   PIO_Configure(pinPsram, PIO_LISTSIZE(pinPsram));
 
@@ -137,9 +143,11 @@ int main(void) {
   BOARD_ConfigurePSRAM(SMC);
 
   i2c.Init();
+
   /* Creates the imu thread. */
   chThdCreateStatic(waIMUThread, sizeof(waIMUThread), NORMALPRIO, IMUThread,
                     NULL);
+
   /* Creates the Env thread. */
   chThdCreateStatic(waEnvThread, sizeof(waEnvThread), NORMALPRIO, EnvThread,
                     NULL);
