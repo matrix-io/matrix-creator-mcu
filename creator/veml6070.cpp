@@ -27,26 +27,25 @@ const uint8_t VEML6070_ADDR_2 = 0x39;
 
 namespace creator {
 
-VEML6070::VEML6070(I2C* i2c) : i2c_(i2c) {
-  CFG_REG_.data = 0x00;
-}
+VEML6070::VEML6070(I2C* i2c) : i2c_(i2c) { CFG_REG_.data = 0x00; }
 
 bool VEML6070::Begin() {
-  
   CFG_REG_.fields.reserved0 = 1;
-  CFG_REG_.fields.ACK = 0 ;
-  CFG_REG_.fields.IT = 3 ;
-  i2c_->WriteByte(VEML6070_ADDR_1 ,CFG_REG_.data);
+  CFG_REG_.fields.ACK = 0;
+  CFG_REG_.fields.IT = 3; /* IT=4T */
+  i2c_->WriteByte(VEML6070_ADDR_1, CFG_REG_.data);
   return true;
 }
 
 float VEML6070::GetUV() {
-  uint8_t data[2];
-  data[0] = i2c_->ReadByte(VEML6070_ADDR_2);
-  data[1] = i2c_->ReadByte(VEML6070_ADDR_1);
-  
-  return float (data[0] << 8 | data[1])/11.0;  
-}
-  
-};
+  /*
+    RSET = 270 k ohms, IT=4T
+    Pag 5: http://www.vishay.com/docs/84310/designingveml6070.pdf
+  */
+  const float vem_fact = 8217.0 / 11.0;
 
+  return float((i2c_->ReadByte(VEML6070_ADDR_2) << 8) |
+               i2c_->ReadByte(VEML6070_ADDR_1)) *
+         vem_fact;
+}
+};
