@@ -52,47 +52,40 @@ static WORKING_AREA(waEnvThread, 256);
 static msg_t EnvThread(void *arg) {
   (void)arg;
 
-  creator::HTS221 hts221(&i2c);
   creator::MPL3115A2 mpl3115a2(&i2c);
+  creator::HTS221 hts221(&i2c);
   creator::VEML6070 veml6070(&i2c);
 
-  hts221.Begin();
   mpl3115a2.Begin();
+  hts221.Begin();
   veml6070.Begin();
 
-  HumidityData hum;
   PressureData press;
+  HumidityData hum;
   UVData uv;
 
-  systime_t time = chTimeNow();
-
   while (true) {
-    time += MS2ST(2000);
-
     palSetPad(IOPORT3, 17);
     chThdSleepMilliseconds(1);
     palClearPad(IOPORT3, 17);
 
     hts221.GetData(hum.humidity, hum.temperature);
-    psram_copy(mem_offset_humidity, (char *)&hum, sizeof(hum));
 
     press.altitude = mpl3115a2.GetAltitude();
     press.pressure = mpl3115a2.GetPressure();
     press.temperature = mpl3115a2.GetTemperature();
-    psram_copy(mem_offset_press, (char *)&press, sizeof(press));
 
     uv.UV = veml6070.GetUV();
-    psram_copy(mem_offset_uv, (char *)&uv, sizeof(uv));
 
-    chThdSleepUntil(time);
+    psram_copy(mem_offset_press, (char *)&press, sizeof(press));
+    psram_copy(mem_offset_humidity, (char *)&hum, sizeof(hum));
+    psram_copy(mem_offset_uv, (char *)&uv, sizeof(uv));
   }
   return (0);
 }
 
 static WORKING_AREA(waIMUThread, 512);
 static msg_t IMUThread(void *arg) {
-  (void)arg;
-
   LSM9DS1 imu(&i2c, IMU_MODE_I2C, 0x6A, 0x1C);
 
   imu.begin();
@@ -143,12 +136,11 @@ int main(void) {
   BOARD_ConfigurePSRAM(SMC);
 
   i2c.Init();
-
   /* Creates the imu thread. */
   chThdCreateStatic(waIMUThread, sizeof(waIMUThread), NORMALPRIO, IMUThread,
                     NULL);
 
-  /* Creates the Env thread. */
+  /* Creates the hum thread. */
   chThdCreateStatic(waEnvThread, sizeof(waEnvThread), NORMALPRIO, EnvThread,
                     NULL);
 
