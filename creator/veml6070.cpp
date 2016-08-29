@@ -42,10 +42,10 @@ float VEML6070::GetUV() {
     RSET = 270 k ohms, IT=4T
     Pag 5: http://www.vishay.com/docs/84310/designingveml6070.pdf
   */
-  const float vem_fact = 8217.0 / 11.0;
+  const float vem_fact = 11.0/ 8217.0;
 
   return float((i2c_->ReadByte(VEML6070_ADDR_2) << 8) |
-               i2c_->ReadByte(VEML6070_ADDR_1)) *
+               i2c_->ReadByte(VEML6070_ADDR_1))*
          vem_fact;
 }
 };
