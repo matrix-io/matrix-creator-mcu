@@ -12,6 +12,7 @@ const int16_t mem_offset_uv = 0x0;
 const int16_t mem_offset_press = 0x10;
 const int16_t mem_offset_humidity = 0x20;
 const int16_t mem_offset_imu = 0x30;
+const int16_t mem_offset_mcu = 0x90;
 
 struct UVData {
   float UV;
@@ -42,5 +43,11 @@ struct IMUData {
   float mag_y;
   float mag_z;
 };
+
+struct MCUData {
+  uint32_t ID;
+  uint32_t version;
+};
+
 
 #endif  // CPP_DRIVER_PRESSURE_DATA_H_

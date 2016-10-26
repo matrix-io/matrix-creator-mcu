@@ -37,6 +37,9 @@ extern "C" {
 #include "atmel_psram.h"
 }
 
+const uint32_t kFirmwareCreatorID = 0x10;
+const uint32_t kFirmwareVersion = 0x161026; /* 0xYYMMDD */
+
 /* Global objects */
 creator::I2C i2c;  // TODO(andres.calderon@admobilize.com): avoid global objects
 
@@ -63,6 +66,10 @@ static msg_t EnvThread(void *arg) {
   PressureData press;
   HumidityData hum;
   UVData uv;
+  MCUData mcu_info;
+
+  mcu_info.ID = kFirmwareCreatorID;
+  mcu_info.version = kFirmwareVersion;
 
   while (true) {
     palSetPad(IOPORT3, 17);
@@ -77,6 +84,7 @@ static msg_t EnvThread(void *arg) {
 
     uv.UV = veml6070.GetUV();
 
+    psram_copy(mem_offset_mcu, (char *)&mcu_info, sizeof(mcu_info));
     psram_copy(mem_offset_press, (char *)&press, sizeof(press));
     psram_copy(mem_offset_humidity, (char *)&hum, sizeof(hum));
     psram_copy(mem_offset_uv, (char *)&uv, sizeof(uv));
@@ -86,6 +94,7 @@ static msg_t EnvThread(void *arg) {
 
 static WORKING_AREA(waIMUThread, 512);
 static msg_t IMUThread(void *arg) {
+  (void)arg;
   LSM9DS1 imu(&i2c, IMU_MODE_I2C, 0x6A, 0x1C);
 
   imu.begin();
