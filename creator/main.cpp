@@ -33,9 +33,15 @@
 #include "./hts221.h"
 #include "./veml6070.h"
 
+
 extern "C" {
 #include "atmel_psram.h"
+#include "atmel_pwm.h"
 }
+
+
+#define PIN_PWM  {PIO_PC13B_PWML0, PIOC, ID_PIOC, PIO_PERIPH_B, PIO_DEFAULT}
+const Pin pinPWM = PIN_PWM;
 
 const uint32_t kFirmwareCreatorID = 0x10;
 const uint32_t kFirmwareVersion = 0x161026; /* 0xYYMMDD */
@@ -129,7 +135,6 @@ static msg_t IMUThread(void *arg) {
   }
   return (0);
 }
-
 /*
  * Application entry point.
  */
@@ -140,7 +145,19 @@ int main(void) {
 
   /* Configure EBI I/O for psram connection*/
   PIO_Configure(pinPsram, PIO_LISTSIZE(pinPsram));
-
+  PIO_Configure( &pinPWM, 1);
+  
+  PWM_Initialize();
+  PWMC_ConfigureClocks(20000000, 0 , 64000000 );
+  /* Configure Channel 0*/ 
+  PWMC_ConfigureChannel(PWM, 0, PWM_CMR_CPRE_CKA, PWM_CMR_CALG, PWM_CMR_CPOL);
+  PWMC_SetPeriod(PWM, 0, 10);
+  PWMC_EnableChannel(PWM,0);
+  PWMC_SetDutyCycle(PWM,0, 5);
+  
+  
+  
+  
   /* complete SMC configuration between PSRAM and SMC waveforms.*/
   BOARD_ConfigurePSRAM(SMC);
 
