@@ -32,7 +32,7 @@
 
 
 #include "DCM.h"
-#include <Arduino.h>
+// #include <Arduino.h>
 
 DCM::DCM(){
 
@@ -153,7 +153,7 @@ void DCM::reset_sensor_fusion() {
   float xAxis[] = {1.0f, 0.0f, 0.0f};
 
   //read_sensors();
-  timestamp = millis();
+  // timestamp = millis(); //TODO: implement this delay. Is this a delay ?
   
   // GET PITCH
   // Using y-z-plane-component/x-component of gravity vector
@@ -231,8 +231,10 @@ void DCM::Drift_correction(void)
   Accel_magnitude = Accel_magnitude / GRAVITY; // Scale to gravity.
 
   // Dynamic weighting of accelerometer info (reliability filter)
+  Accel_weight = 1 - 2 ; // * abs(1 - Accel_magnitude);
+
   // Weight for accelerometer info (<0.5G = 0.0, 1G = 1.0 , >1.5G = 0.0)
-  Accel_weight = constrain(1 - 2*abs(1 - Accel_magnitude),0,1);  //  
+  Accel_weight = (Accel_weight < 0)? 0:((Accel_weight > 1)?1:Accel_weight);
 
   Vector_Cross_Product(&errorRollPitch[0],&Accel_Vector[0],&DCM_Matrix[2][0]); //adjust the ground of reference
   Vector_Scale(&Omega_P[0],&errorRollPitch[0],Kp_ROLLPITCH*Accel_weight);

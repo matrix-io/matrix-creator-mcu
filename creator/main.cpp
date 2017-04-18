@@ -32,6 +32,8 @@
 #include "./lsm9ds1.h"
 #include "./hts221.h"
 #include "./veml6070.h"
+#include "./DCM.h"
+
 
 extern "C" {
 #include "atmel_psram.h"
@@ -130,10 +132,15 @@ static msg_t IMUThread(void *arg) {
   return (0);
 }
 
+
+
 /*
  * Application entry point.
  */
 int main(void) {
+
+  DCM dcm;
+
   halInit();
 
   chSysInit();

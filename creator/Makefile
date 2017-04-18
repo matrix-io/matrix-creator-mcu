@@ -77,7 +77,8 @@ CPPSRC = i2c.cpp \
          lsm9ds1.cpp \
          mpl3115a2.cpp \
          veml6070.cpp \
-         main.cpp
+         main.cpp \
+         DCM.cpp
 
 # C sources to be compiled in ARM mode regardless of the global setting.
 # NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
