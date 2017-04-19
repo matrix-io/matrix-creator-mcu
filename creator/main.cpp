@@ -103,49 +103,123 @@ static msg_t EnvThread(void *arg) {
   return (0);
 }
 
+
 static WORKING_AREA(waIMUThread, 512);
 static msg_t IMUThread(void *arg) {
   (void)arg;
+
   LSM9DS1 imu(&i2c, IMU_MODE_I2C, 0x6A, 0x1C);
-  DCM dcm;
-
-
   imu.begin();
 
   IMUData data;
+  float values[10]; // TODO: Verify the length
+  float ypr[3]; // yaw, pith, roll angles in rad
+
+  float last, now,elapsed;      // sample period expressed in milliseconds
+
+  // DCM Initialization
+  DCM dcm;
+  dcm = DCM();
+  // Reading data from the sensors
+  imu.readAccel();
+  imu.readGyro();
+  imu.readMag();
+
+  // organize the sensor data for DCM input
+  values[0] = imu.calcAccel(imu.ax);
+  values[1] = imu.calcAccel(imu.ay);
+  values[2] = imu.calcAccel(imu.az);
+  values[3] = imu.calcGyro(imu.gx);
+  values[4] = imu.calcGyro(imu.gy);
+  values[5] = imu.calcGyro(imu.gz);
+  values[6] = imu.calcMag(imu.mx);
+  values[7] = imu.calcMag(imu.my);
+  values[8] = imu.calcMag(imu.mz);
+
+  // values[9] = maghead.iheading(
+  //   1, 0, 0,
+  //   values[0],
+  //   values[1],
+  //   values[2],
+  //   values[6],
+  //   values[7],
+  //   values[8]);
+
+  dcm.setSensorVals(values);
+  dcm.DCM_init(Kp_ROLLPITCH, Ki_ROLLPITCH, Kp_YAW, Ki_YAW);
 
   while (true) {
-    imu.readGyro();
-    data.gyro_x = imu.calcGyro(imu.gx);
-    data.gyro_y = imu.calcGyro(imu.gy);
-    data.gyro_z = imu.calcGyro(imu.gz);
 
-    imu.readMag();
-    data.mag_x = imu.calcMag(imu.mx);
-    data.mag_y = imu.calcMag(imu.my);
-    data.mag_z = imu.calcMag(imu.mz);
-
+    // Reading data from the sensors
     imu.readAccel();
-    data.accel_x = imu.calcAccel(imu.ax);
-    data.accel_y = imu.calcAccel(imu.ay);
-    data.accel_z = imu.calcAccel(imu.az);
+    imu.readGyro();
+    imu.readMag();
 
-    // data.yaw = atan2(data.mag_y, -data.mag_x) * 180.0 / M_PI;
-    // data.roll = atan2(data.accel_y, data.accel_z) * 180.0 / M_PI;
-    // data.pitch = atan2(-data.accel_x, sqrt(data.accel_y * data.accel_y +
-    //                                        data.accel_z * data.accel_z)) * 180.0 / M_PI;
+    // organize the sensor data for DCM input
+    values[0] = imu.calcAccel(imu.ax);
+    values[1] = imu.calcAccel(imu.ay);
+    values[2] = imu.calcAccel(imu.az);
+    values[3] = imu.calcGyro(imu.gx);
+    values[4] = imu.calcGyro(imu.gy);
+    values[5] = imu.calcGyro(imu.gz);
+    values[6] = imu.calcMag(imu.mx);
+    values[7] = imu.calcMag(imu.my);
+    values[8] = imu.calcMag(imu.mz);
 
+    // values[9] = maghead.iheading(
+    //   1, 0, 0,
+    //   values[0],
+    //   values[1],
+    //   values[2],
+    //   values[6],
+    //   values[7],
+    //   values[8]);
 
+    // Sampling time
 
+    now = chTimeNow();
+    elapsed = (now - last)/CH_FREQUENCY;
+    last = now;
+
+    dcm.G_Dt = elapsed;
+    dcm.setSensorVals(values);
+    dcm.calDCM();
+    dcm.getEulerDeg(ypr);
+
+    // Organize IMU data for ram writing
+    data.accel_x  = values[0];
+    data.accel_y  = values[1];
+    data.accel_z  = values[2];
+
+    // data.gyro_x = elapsed;
+    // data.gyro_y = values[4];
+    // data.gyro_z = values[5];
+
+    // data.mag_x = values[6];
+    // data.mag_y = values[7];
+    // data.mag_z = values[8];
+
+    // Getting yaw, pitch and roll from DCM output
+    data.yaw = ypr[0];
+    data.pitch = ypr[1];
+    data.roll = ypr[2];
+
+    // TODO: just for debug
+    data.mag_x = elapsed;
+    data.mag_y = CH_FREQUENCY;
+    data.mag_z = values[8];
+
+    data.gyro_x = atan2(data.mag_y, -data.mag_x) * 180.0 / M_PI;
+    data.gyro_y = atan2(data.accel_y, data.accel_z) * 180.0 / M_PI;
+    data.gyro_z = atan2(-data.accel_x,
+      sqrt(data.accel_y * data.accel_y + data.accel_z * data.accel_z)) * 180.0 / M_PI;
 
     psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
 
-    chThdSleepMilliseconds(20);
+    // chThdSleepMilliseconds(20); // TODO : Probably we need this faster
   }
   return (0);
 }
-
-
 
 /*
  * Application entry point.
