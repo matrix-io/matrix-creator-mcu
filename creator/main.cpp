@@ -39,6 +39,15 @@ extern "C" {
 #include "atmel_psram.h"
 }
 
+#define twoKpDef  (2.0f * 0.75f)  //works with and without mag enabled
+#define twoKiDef  (2.0f * 0.1625f)
+#define betaDef  0.085f
+//Used for DCM filter
+const float Kp_ROLLPITCH = 1.2f;  //was .3423
+const float Ki_ROLLPITCH = 0.0234f;
+const float Kp_YAW = 1.75f;   // was 1.2 and 0.02
+const float Ki_YAW = 0.002f;
+
 const uint32_t kFirmwareCreatorID = 0x10;
 const uint32_t kFirmwareVersion = 0x161026; /* 0xYYMMDD */
 
@@ -98,6 +107,8 @@ static WORKING_AREA(waIMUThread, 512);
 static msg_t IMUThread(void *arg) {
   (void)arg;
   LSM9DS1 imu(&i2c, IMU_MODE_I2C, 0x6A, 0x1C);
+  DCM dcm;
+
 
   imu.begin();
 
@@ -119,11 +130,13 @@ static msg_t IMUThread(void *arg) {
     data.accel_y = imu.calcAccel(imu.ay);
     data.accel_z = imu.calcAccel(imu.az);
 
-    data.yaw = atan2(data.mag_y, -data.mag_x) * 180.0 / M_PI;
-    data.roll = atan2(data.accel_y, data.accel_z) * 180.0 / M_PI;
-    data.pitch = atan2(-data.accel_x, sqrt(data.accel_y * data.accel_y +
-                                           data.accel_z * data.accel_z)) *
-                 180.0 / M_PI;
+    // data.yaw = atan2(data.mag_y, -data.mag_x) * 180.0 / M_PI;
+    // data.roll = atan2(data.accel_y, data.accel_z) * 180.0 / M_PI;
+    // data.pitch = atan2(-data.accel_x, sqrt(data.accel_y * data.accel_y +
+    //                                        data.accel_z * data.accel_z)) * 180.0 / M_PI;
+
+
+
 
     psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
 
@@ -139,7 +152,6 @@ static msg_t IMUThread(void *arg) {
  */
 int main(void) {
 
-  DCM dcm;
 
   halInit();
 

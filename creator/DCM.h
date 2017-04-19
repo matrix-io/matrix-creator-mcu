@@ -70,6 +70,9 @@ class DCM
 		float accel[3] = {0, 0, 0};  
 		float magnetom[3] = {0, 0, 0};
 		float gyro[3] = {0, 0, 0};
+
+		float Update_Matrixaa[3][3] = {{0, 1, 2}, {3, 4, 5}, {6, 7, 8}};
+
 		
 		// DCM variables
 		float MAG_Heading = 0.0f;
