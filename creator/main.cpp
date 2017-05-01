@@ -101,10 +101,10 @@ static msg_t IMUThread(void *arg) {
 
   IMUData data;
 
-  int16_t magMax[3] = {0, 0, 0,};
-  int16_t magMin[3] = {0, 0, 0,};
-  int16_t mBiasRaw[3] = {0, 0, 0,};
-  int16_t mBias[3] = {0, 0, 0,};
+  int16_t magMax[3] = {0, 0, 0};
+  int16_t magMin[3] = {0, 0, 0};
+  int16_t mBiasRaw[3] = {0, 0, 0};
+  int16_t mBias[3] = {0, 0, 0};
 
 
   while (true) {
@@ -114,7 +114,7 @@ static msg_t IMUThread(void *arg) {
     data.gyro_z = imu.calcGyro(imu.gz);
 
     imu.readMag();
-    data.mag_x = imu.calcMag(imu.mx);
+    data.mag_x = imu.calcMag(imu.mx); 
     data.mag_y = imu.calcMag(imu.my);
     data.mag_z = imu.calcMag(imu.mz);
 
@@ -138,12 +138,15 @@ static msg_t IMUThread(void *arg) {
     for (i = 0; i < 3; i++) {
       mBiasRaw[i] = (magMax[i] + magMin[i]) / 2;
       mBias[i] = imu.calcMag(mBiasRaw[i]);
-      imu.magOffset(i, mBiasRaw[i]);
+      imu.magOffset(i, 100);//mBiasRaw[i]);
     }
 
-    data.gyro_x = mBias[0];
-    data.gyro_y = mBias[1];
-    data.gyro_z = mBias[2];
+    data.gyro_x = magMax[0];
+    data.gyro_y = magMax[1];
+    data.gyro_z = magMin[0];
+
+    data.accel_x = magMin[1];
+    data.accel_y = -1;
 
     // data.yaw = atan2(data.mag_y, -data.mag_x) * 180.0 / M_PI;
     // data.roll = atan2(data.accel_y, data.accel_z) * 180.0 / M_PI;
