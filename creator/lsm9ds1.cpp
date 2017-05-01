@@ -124,6 +124,9 @@ void LSM9DS1::init(interface_mode interface, uint8_t xgAddr, uint8_t mAddr) {
     gBiasRaw[i] = 0;
     aBiasRaw[i] = 0;
     mBiasRaw[i] = 0;
+    magMin[i] = 0;
+    magMax[i] = 0;
+
   }
   _autoCalc = false;
 }
@@ -360,6 +363,27 @@ void LSM9DS1::calibrateMag(bool loadIn) {
     if (loadIn) magOffset(j, mBiasRaw[j]);
   }
 }
+
+void LSM9DS1::calibrateMagOnline(bool loadIn) {
+  int i;
+
+  int16_t magTemp[3] = {0, 0, 0};
+  magTemp[0] = mx;
+  magTemp[1] = my;
+  magTemp[2] = mz;
+  
+  for (i = 0; i < 3; i++) {
+    if (magTemp[i] > magMax[i]) magMax[i] = magTemp[i];
+    if (magTemp[i] < magMin[i]) magMin[i] = magTemp[i];
+  }
+
+  for (i = 0; i < 3; i++) {
+    mBiasRaw[i] = (magMax[i] + magMin[i]) / 2;
+    mBias[i] = calcMag(mBiasRaw[i]);
+    if (loadIn) magOffset(i, mBiasRaw[i]);
+  }
+}
+
 void LSM9DS1::magOffset(uint8_t axis, int16_t offset) {
   if (axis > 2) return;
   uint8_t msb, lsb;

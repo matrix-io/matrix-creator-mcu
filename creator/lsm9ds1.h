@@ -47,6 +47,8 @@ class LSM9DS1 {
   int16_t temperature;  // Chip temperature
   float gBias[3], aBias[3], mBias[3];
   int16_t gBiasRaw[3], aBiasRaw[3], mBiasRaw[3];
+  int16_t magMin[3];
+  int16_t magMax[3];
 
   // LSM9DS1 -- LSM9DS1 class constructor
   // The constructor will set up a handful of private variables, and set the
@@ -76,6 +78,7 @@ class LSM9DS1 {
 
   void calibrate(bool autoCalc = true);
   void calibrateMag(bool loadIn = true);
+  void calibrateMagOnline(bool loadIn = true);
   void magOffset(uint8_t axis, int16_t offset);
 
   // accelAvailable() -- Polls the accelerometer status register to check
