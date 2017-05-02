@@ -101,12 +101,6 @@ static msg_t IMUThread(void *arg) {
 
   IMUData data;
 
-  int16_t magMax[3] = {0, 0, 0};
-  int16_t magMin[3] = {0, 0, 0};
-  int16_t mBiasRaw[3] = {0, 0, 0};
-  int16_t mBias[3] = {0, 0, 0};
-
-
   while (true) {
     imu.readGyro();
     data.gyro_x = imu.calcGyro(imu.gx);
@@ -114,45 +108,25 @@ static msg_t IMUThread(void *arg) {
     data.gyro_z = imu.calcGyro(imu.gz);
 
     imu.readMag();
-    data.mag_x = imu.calcMag(imu.mx); 
-    data.mag_y = imu.calcMag(imu.my);
-    data.mag_z = imu.calcMag(imu.mz);
+    imu.calibrateMagOnline();
+    data.mag_x = imu.calcMag(imu.mx - imu.mBiasRaw[0]); 
+    data.mag_y = imu.calcMag(imu.my - imu.mBiasRaw[1]);
+    data.mag_z = imu.calcMag(imu.mz - imu.mBiasRaw[2]);
 
     imu.readAccel();
     data.accel_x = imu.calcAccel(imu.ax);
     data.accel_y = imu.calcAccel(imu.ay);
     data.accel_z = imu.calcAccel(imu.az);
 
+    data.yaw = atan2(data.mag_y, -data.mag_x) * 180.0 / M_PI;
+    data.roll = atan2(data.accel_y, data.accel_z) * 180.0 / M_PI;
+    data.pitch = atan2(-data.accel_x, sqrt(data.accel_y * data.accel_y +
+                                           data.accel_z * data.accel_z)) *
+                 180.0 / M_PI;
 
-    int16_t magTemp[3] = {0, 0, 0};
-    magTemp[0] = imu.mx;
-    magTemp[1] = imu.my;
-    magTemp[2] = imu.mz;
-    
-    int i;
-    for (i = 0; i < 3; i++) {
-      if (magTemp[i] > magMax[i]) magMax[i] = magTemp[i];
-      if (magTemp[i] < magMin[i]) magMin[i] = magTemp[i];
-    }
-
-    for (i = 0; i < 3; i++) {
-      mBiasRaw[i] = (magMax[i] + magMin[i]) / 2;
-      mBias[i] = imu.calcMag(mBiasRaw[i]);
-      imu.magOffset(i, 100);//mBiasRaw[i]);
-    }
-
-    data.gyro_x = magMax[0];
-    data.gyro_y = magMax[1];
-    data.gyro_z = magMin[0];
-
-    data.accel_x = magMin[1];
-    data.accel_y = -1;
-
-    // data.yaw = atan2(data.mag_y, -data.mag_x) * 180.0 / M_PI;
-    // data.roll = atan2(data.accel_y, data.accel_z) * 180.0 / M_PI;
-    // data.pitch = atan2(-data.accel_x, sqrt(data.accel_y * data.accel_y +
-    //                                        data.accel_z * data.accel_z)) *
-    //              180.0 / M_PI;
+    data.gyro_x = imu.calcMag(imu.mx);
+    data.gyro_y = imu.calcMag(imu.my);
+    data.gyro_z = imu.calcMag(imu.mz);
 
     psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
 

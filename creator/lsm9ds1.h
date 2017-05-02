@@ -78,7 +78,7 @@ class LSM9DS1 {
 
   void calibrate(bool autoCalc = true);
   void calibrateMag(bool loadIn = true);
-  void calibrateMagOnline(bool loadIn = true);
+  void calibrateMagOnline();
   void magOffset(uint8_t axis, int16_t offset);
 
   // accelAvailable() -- Polls the accelerometer status register to check
