@@ -78,6 +78,7 @@ CPPSRC = i2c.cpp \
          mpl3115a2.cpp \
          veml6070.cpp \
          main.cpp \
+         iCompass.cpp \
          DCM.cpp
 
 # C sources to be compiled in ARM mode regardless of the global setting.

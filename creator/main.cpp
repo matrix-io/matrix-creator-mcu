@@ -32,6 +32,10 @@
 #include "./lsm9ds1.h"
 #include "./hts221.h"
 #include "./veml6070.h"
+#include "./iCompass.h"
+
+//Magnetic declination angle for iCompass
+#define MAG_DEC -6.683333  //degrees for Miami Beach, FL (from http://www.magnetic-declination.com/)
 
 extern "C" {
 #include "atmel_psram.h"
@@ -101,6 +105,9 @@ static msg_t IMUThread(void *arg) {
 
   IMUData data;
 
+  iCompass maghead; 
+  maghead = iCompass(MAG_DEC);
+
   while (true) {
     imu.readGyro();
     data.gyro_x = imu.calcGyro(imu.gx);
@@ -118,7 +125,11 @@ static msg_t IMUThread(void *arg) {
     data.accel_y = imu.calcAccel(imu.ay);
     data.accel_z = imu.calcAccel(imu.az);
 
-    data.yaw = atan2(data.mag_y, -data.mag_x) * 180.0 / M_PI;
+
+    data.yaw = maghead.iheading(1, 0, 0,
+      data.accel_x, data.accel_y, data.accel_z,
+      data.mag_x, data.mag_y, data.mag_z);
+    // data.yaw = atan2(data.mag_y, -data.mag_x) * 180.0 / M_PI;
     data.roll = atan2(data.accel_y, data.accel_z) * 180.0 / M_PI;
     data.pitch = atan2(-data.accel_x, sqrt(data.accel_y * data.accel_y +
                                            data.accel_z * data.accel_z)) *
