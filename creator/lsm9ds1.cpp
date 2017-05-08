@@ -126,6 +126,7 @@ void LSM9DS1::init(interface_mode interface, uint8_t xgAddr, uint8_t mAddr) {
     mBiasRaw[i] = 0;
     magMin[i] = 10000;
     magMax[i] = -10000;
+    magOffset[i] = 0;
 
   }
   _autoCalc = false;
@@ -384,11 +385,12 @@ void LSM9DS1::calibrateMagOnline() {
       new_max_min = true;
     }
   }
-
+  // TODO : Implemete how the on chip offset is gonna work with the max and min in the firmware.
   if (new_max_min)
   for (i = 0; i < 3; i++) {
     mBiasRaw[i] = (magMax[i] + magMin[i]) / 2;
     mBias[i] = calcMag(mBiasRaw[i]);
+    magOffset(i, mBiasRaw[i]);
   }
 }
 
@@ -475,6 +477,11 @@ void LSM9DS1::initMag() {
   //	0:continuous, 1:not updated until MSB/LSB are read
   tempRegValue = 0;
   mWriteByte(CTRL_REG5_M, tempRegValue);
+
+  //Reading the last Magnetometer min and max offset values by axis
+  for (int i = 0; i < 3; ++i) {
+    magOffset[i] = getOffset(i);
+  }
 }
 
 uint8_t LSM9DS1::accelAvailable() {

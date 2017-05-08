@@ -137,21 +137,9 @@ static msg_t IMUThread(void *arg) {
                                            data.accel_z * data.accel_z)) *
                  180.0 / M_PI;
 
-    if (count++ == 0)
-    {
-      imu.magOffset(0,0); // X
-      imu.magOffset(1,100); // Y
-      imu.magOffset(2,200); // Z
-
-    }
-    
     data.accel_x = imu.getOffset(0);
     data.accel_y = imu.getOffset(1);
     data.accel_z = imu.getOffset(2);
-    
-    data.gyro_x = imu.calcMag(imu.mx);
-    data.gyro_y = imu.calcMag(imu.my);
-    data.gyro_z = imu.calcMag(imu.mz);
     
     psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
 

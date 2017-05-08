@@ -49,6 +49,7 @@ class LSM9DS1 {
   int16_t gBiasRaw[3], aBiasRaw[3], mBiasRaw[3];
   int16_t magMin[3];
   int16_t magMax[3];
+  int16_t magOffset[3];
 
   // LSM9DS1 -- LSM9DS1 class constructor
   // The constructor will set up a handful of private variables, and set the
