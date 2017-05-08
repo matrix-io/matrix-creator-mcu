@@ -392,6 +392,15 @@ void LSM9DS1::calibrateMagOnline() {
   }
 }
 
+uint16_t LSM9DS1::getOffset(uint8_t axis){
+  uint16_t offset = 0;
+  uint8_t msb, lsb;
+  lsb = mReadByte(OFFSET_X_REG_L_M + (2 * axis));
+  msb = mReadByte(OFFSET_X_REG_H_M + (2 * axis));
+  offset = ((uint16_t)msb << 8) | lsb;
+  return offset;
+}
+
 void LSM9DS1::magOffset(uint8_t axis, int16_t offset) {
   if (axis > 2) return;
   uint8_t msb, lsb;
