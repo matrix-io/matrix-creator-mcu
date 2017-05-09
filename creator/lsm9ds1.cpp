@@ -361,7 +361,7 @@ void LSM9DS1::calibrateMag(bool loadIn) {
   for (j = 0; j < 3; j++) {
     mBiasRaw[j] = (magMax[j] + magMin[j]) / 2;
     mBias[j] = calcMag(mBiasRaw[j]);
-    if (loadIn) magOffset(j, mBiasRaw[j]);
+    if (loadIn) magSetOffset(j, mBiasRaw[j]);
   }
 }
 
@@ -384,13 +384,13 @@ void LSM9DS1::calibrateMagOnline() {
       magMin[i] = magTemp[i];
       new_max_min = true;
     }
-  }
-  // TODO : Implemete how the on chip offset is gonna work with the max and min in the firmware.
-  if (new_max_min)
-  for (i = 0; i < 3; i++) {
-    mBiasRaw[i] = (magMax[i] + magMin[i]) / 2;
-    mBias[i] = calcMag(mBiasRaw[i]);
-    magOffset(i, mBiasRaw[i]);
+
+    if (new_max_min) {
+      mBiasRaw[i] = (magMax[i] + magMin[i]) / 2;
+      mBias[i] = calcMag(mBiasRaw[i]);
+      magSetOffset(i, mBiasRaw[i]);
+      new_max_min = false; 
+    }
   }
 }
 
@@ -403,7 +403,7 @@ uint16_t LSM9DS1::getOffset(uint8_t axis){
   return offset;
 }
 
-void LSM9DS1::magOffset(uint8_t axis, int16_t offset) {
+void LSM9DS1::magSetOffset(uint8_t axis, int16_t offset) {
   if (axis > 2) return;
   uint8_t msb, lsb;
   msb = (offset & 0xFF00) >> 8;

@@ -110,6 +110,9 @@ static msg_t IMUThread(void *arg) {
 
   uint8_t count = 0;
 
+  imu.magSetOffset(0,0);
+  imu.magSetOffset(1,0);
+
   while (true) {
     imu.readGyro();
     data.gyro_x = imu.calcGyro(imu.gx);
@@ -117,7 +120,6 @@ static msg_t IMUThread(void *arg) {
     data.gyro_z = imu.calcGyro(imu.gz);
 
     imu.readMag();
-    imu.calibrateMagOnline();
     data.mag_x = imu.calcMag(imu.mx - imu.mBiasRaw[0]); 
     data.mag_y = imu.calcMag(imu.my - imu.mBiasRaw[1]);
     data.mag_z = imu.calcMag(imu.mz - imu.mBiasRaw[2]);
@@ -137,9 +139,9 @@ static msg_t IMUThread(void *arg) {
                                            data.accel_z * data.accel_z)) *
                  180.0 / M_PI;
 
-    data.accel_x = imu.getOffset(0);
-    data.accel_y = imu.getOffset(1);
-    data.accel_z = imu.getOffset(2);
+    data.gyro_x = imu.getOffset(0);
+    data.gyro_y = imu.getOffset(1);
+    data.gyro_z = imu.getOffset(2);
     
     psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
 
