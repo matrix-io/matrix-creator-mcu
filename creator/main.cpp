@@ -42,7 +42,7 @@ extern "C" {
 }
 
 const uint32_t kFirmwareCreatorID = 0x10;
-const uint32_t kFirmwareVersion = 0x161026; /* 0xYYMMDD */
+const uint32_t kFirmwareVersion = 0x170623; /* 0xYYMMDD */
 
 /* Global objects */
 creator::I2C i2c;  // TODO(andres.calderon@admobilize.com): avoid global objects
@@ -55,6 +55,13 @@ void psram_copy(uint8_t mem_offset, char *data, uint8_t len) {
   }
 }
 
+void psram_read(uint8_t mem_offset, char *data, uint8_t len) {
+  register char *psram = (char *)PSRAM_BASE_ADDRESS;
+
+  for (int i = 0; i < len; i++) {
+    data[i] = psram[mem_offset + i];
+  }
+}
 static WORKING_AREA(waEnvThread, 256);
 static msg_t EnvThread(void *arg) {
   (void)arg;
@@ -76,9 +83,9 @@ static msg_t EnvThread(void *arg) {
   mcu_info.version = kFirmwareVersion;
 
   while (true) {
-    palSetPad(IOPORT3, 17);
-    chThdSleepMilliseconds(1);
-    palClearPad(IOPORT3, 17);
+    // palSetPad(IOPORT3, 17);
+    // chThdSleepMilliseconds(1);
+    // palClearPad(IOPORT3, 17);
 
     hts221.GetData(hum.humidity, hum.temperature);
 
@@ -99,53 +106,60 @@ static msg_t EnvThread(void *arg) {
 static WORKING_AREA(waIMUThread, 512);
 static msg_t IMUThread(void *arg) {
   (void)arg;
+  
   LSM9DS1 imu(&i2c, IMU_MODE_I2C, 0x6A, 0x1C);
-
   imu.begin();
-
-  IMUData data;
-
+  
+  
   iCompass maghead; 
   maghead = iCompass(MAG_DEC);
 
+  IMUData data {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  // Writing zeros in FPGA imu data for the first time.
+  psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
+
   uint8_t count = 0;
-
-  imu.magSetOffset(0,0);
-  imu.magSetOffset(1,0);
-
   while (true) {
+
+    palSetPad(IOPORT3, 17);
+    chThdSleepMilliseconds(1);
+    palClearPad(IOPORT3, 17);
+
     imu.readGyro();
     data.gyro_x = imu.calcGyro(imu.gx);
     data.gyro_y = imu.calcGyro(imu.gy);
     data.gyro_z = imu.calcGyro(imu.gz);
 
     imu.readMag();
-    data.mag_x = imu.calcMag(imu.mx - imu.mBiasRaw[0]); 
-    data.mag_y = imu.calcMag(imu.my - imu.mBiasRaw[1]);
-    data.mag_z = imu.calcMag(imu.mz - imu.mBiasRaw[2]);
+    data.mag_x = imu.calcMag(imu.mx); 
+    data.mag_y = imu.calcMag(imu.my);
+    data.mag_z = imu.calcMag(imu.mz);
 
     imu.readAccel();
     data.accel_x = imu.calcAccel(imu.ax);
     data.accel_y = imu.calcAccel(imu.ay);
     data.accel_z = imu.calcAccel(imu.az);
 
+    psram_read(mem_offset_imu, (char *)&data, sizeof(data));
+    if (data.new_calibration_values)
+    {
+      /* code */
+    }
 
-    data.yaw = maghead.iheading(1, 0, 0,
-      data.accel_x, data.accel_y, data.accel_z,
-      data.mag_x, data.mag_y, data.mag_z);
-    // data.yaw = atan2(data.mag_y, -data.mag_x) * 180.0 / M_PI;
+    // YAW method #1 : Simply using current orientation data from the magnetometer.
+    data.yaw = atan2(data.mag_y, -data.mag_x) * 180.0 / M_PI;
+    // YAW method #2 : Using iCompass implementation
+    // data.yaw = maghead.iheading(1, 0, 0,
+    //   data.accel_x, data.accel_y, data.accel_z,
+    //   data.mag_x, data.mag_y, data.mag_z);
     data.roll = atan2(data.accel_y, data.accel_z) * 180.0 / M_PI;
     data.pitch = atan2(-data.accel_x, sqrt(data.accel_y * data.accel_y +
                                            data.accel_z * data.accel_z)) *
                  180.0 / M_PI;
 
-    data.gyro_x = imu.getOffset(0);
-    data.gyro_y = imu.getOffset(1);
-    data.gyro_z = imu.getOffset(2);
-    
     psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
 
-    chThdSleepMilliseconds(200);
+    chThdSleepMilliseconds(1);
   }
   return (0);
 }

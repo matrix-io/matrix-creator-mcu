@@ -33,15 +33,24 @@ struct IMUData {
   float yaw;
   float pitch;
   float roll;
+
   float accel_x;
   float accel_y;
   float accel_z;
+
   float gyro_x;
   float gyro_y;
   float gyro_z;
+
   float mag_x;
   float mag_y;
   float mag_z;
+
+  float mag_x_offset;
+  float mag_y_offset;
+  float mag_z_offset;
+
+  bool new_calibration_values;
 };
 
 struct MCUData {
