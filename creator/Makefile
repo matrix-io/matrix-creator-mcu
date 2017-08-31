@@ -70,9 +70,31 @@ CSRC = $(PORTSRC) \
        $(CHIBIOS)/os/various/syscalls.c \
        $(CHIBIOS)/os/various/chprintf.c 
 
+
+IR = ../third_party/IR
+
+IRSRC = $(IR)/ir_Aiwa.cpp \
+	$(IR)/ir_Denon.cpp \
+        $(IR)/ir_Dish.cpp \
+        $(IR)/ir_JVC.cpp \
+        $(IR)/ir_LG.cpp \
+        $(IR)/ir_Mitsubishi.cpp \
+        $(IR)/ir_NEC.cpp \
+        $(IR)/ir_Panasonic.cpp \
+        $(IR)/irPronto.cpp \
+        $(IR)/ir_RC5_RC6.cpp \
+        $(IR)/ir_Samsung.cpp \
+        $(IR)/ir_Sanyo.cpp \
+        $(IR)/ir_Sony.cpp \
+        $(IR)/ir_Template.cpp \
+        $(IR)/ir_Whynter.cpp \
+        $(IR)/irSend.cpp
+
+
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
-CPPSRC = i2c.cpp \
+CPPSRC = $(IRSRC) \
+         i2c.cpp \
          hts221.cpp \
          lsm9ds1.cpp \
          mpl3115a2.cpp \
@@ -104,7 +126,8 @@ ASMSRC = $(PORTASM)
 
 INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          $(HALINC) $(PLATFORMINC) $(BOARDINC) \
-         $(CHIBIOS)/os/various 
+         $(CHIBIOS)/os/various \
+	 $(IR) 
 
 #
 # Project, sources and paths

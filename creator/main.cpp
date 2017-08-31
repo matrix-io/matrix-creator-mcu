@@ -33,6 +33,8 @@
 #include "./hts221.h"
 #include "./veml6070.h"
 
+#include "IRremote.h"
+
 extern "C" {
 #include "atmel_psram.h"
 }
@@ -137,6 +139,9 @@ int main(void) {
   halInit();
 
   chSysInit();
+
+  IRsend ir;
+  ir.sendSony(0xa90, 12);
 
   /* Configure EBI I/O for psram connection*/
   PIO_Configure(pinPsram, PIO_LISTSIZE(pinPsram));
