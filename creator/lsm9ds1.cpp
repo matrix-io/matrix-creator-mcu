@@ -236,13 +236,13 @@ void LSM9DS1::initGyro() {
 void LSM9DS1::initAccel() {
   uint8_t tempRegValue = 0;
 
-  //	CTRL_REG5_XL (0x1F) (Default value: 0x38)
-  //	[DEC_1][DEC_0][Zen_XL][Yen_XL][Zen_XL][0][0][0]
-  //	DEC[0:1] - Decimation of accel data on OUT REG and FIFO.
-  //		00: None, 01: 2 samples, 10: 4 samples 11: 8 samples
-  //	Zen_XL - Z-axis output enabled
-  //	Yen_XL - Y-axis output enabled
-  //	Xen_XL - X-axis output enabled
+  //  CTRL_REG5_XL (0x1F) (Default value: 0x38)
+  //  [DEC_1][DEC_0][Zen_XL][Yen_XL][Zen_XL][0][0][0]
+  //  DEC[0:1] - Decimation of accel data on OUT REG and FIFO.
+  //    00: None, 01: 2 samples, 10: 4 samples 11: 8 samples
+  //  Zen_XL - Z-axis output enabled
+  //  Yen_XL - Y-axis output enabled
+  //  Xen_XL - X-axis output enabled
   if (settings.accel.enableZ) tempRegValue |= (1 << 5);
   if (settings.accel.enableY) tempRegValue |= (1 << 4);
   if (settings.accel.enableX) tempRegValue |= (1 << 3);
@@ -412,6 +412,42 @@ void LSM9DS1::magSetOffset(uint8_t axis, int16_t offset) {
   mWriteByte(OFFSET_X_REG_H_M + (2 * axis), msb);
 }
 
+void LSM9DS1::SetMagOffsetX(float offset) {
+  SetMagOffsetX((int16_t)(offset/mRes));
+}
+
+void LSM9DS1::SetMagOffsetY(float offset) {
+  SetMagOffsetY((int16_t)(offset/mRes));
+}
+
+void LSM9DS1::SetMagOffsetZ(float offset) {
+  SetMagOffsetZ((int16_t)(offset/mRes));
+}
+
+void LSM9DS1::SetMagOffsetX(int16_t offset) {
+  uint8_t msb, lsb;
+  msb = (offset & 0xFF00) >> 8;
+  lsb = offset & 0x00FF;
+  mWriteByte(OFFSET_X_REG_L_M, lsb);
+  mWriteByte(OFFSET_X_REG_H_M, msb);
+}
+
+void LSM9DS1::SetMagOffsetY(int16_t offset) {
+  uint8_t msb, lsb;
+  msb = (offset & 0xFF00) >> 8;
+  lsb = offset & 0x00FF;
+  mWriteByte(OFFSET_Y_REG_L_M, lsb);
+  mWriteByte(OFFSET_Y_REG_H_M, msb);
+}
+
+void LSM9DS1::SetMagOffsetZ(int16_t offset) {
+  uint8_t msb, lsb;
+  msb = (offset & 0xFF00) >> 8;
+  lsb = offset & 0x00FF;
+  mWriteByte(OFFSET_Z_REG_L_M, lsb);
+  mWriteByte(OFFSET_Z_REG_H_M, msb);
+}
+
 void LSM9DS1::initMag() {
   uint8_t tempRegValue = 0;
 
@@ -419,8 +455,8 @@ void LSM9DS1::initMag() {
   // [TEMP_COMP][OM1][OM0][DO2][DO1][DO0][0][ST]
   // TEMP_COMP - Temperature compensation
   // OM[1:0] - X & Y axes op mode selection
-  //	00:low-power, 01:medium performance
-  //	10: high performance, 11:ultra-high performance
+  //  00:low-power, 01:medium performance
+  //  10: high performance, 11:ultra-high performance
   // DO[2:0] - Output data rate selection
   // ST - Self-test enable
   if (settings.mag.tempCompensationEnable) tempRegValue |= (1 << 7);
@@ -454,7 +490,7 @@ void LSM9DS1::initMag() {
   // LP - Low-power mode cofiguration (1:enable)
   // SIM - SPI mode selection (0:write-only, 1:read/write enable)
   // MD[1:0] - Operating mode
-  //	00:continuous conversion, 01:single-conversion,
+  //  00:continuous conversion, 01:single-conversion,
   //  10,11: Power-down
   tempRegValue = 0;
   if (settings.mag.lowPowerEnable) tempRegValue |= (1 << 5);
@@ -464,8 +500,8 @@ void LSM9DS1::initMag() {
   // CTRL_REG4_M (Default value: 0x00)
   // [0][0][0][0][OMZ1][OMZ0][BLE][0]
   // OMZ[1:0] - Z-axis operative mode selection
-  //	00:low-power mode, 01:medium performance
-  //	10:high performance, 10:ultra-high performance
+  //  00:low-power mode, 01:medium performance
+  //  10:high performance, 10:ultra-high performance
   // BLE - Big/little endian data
   tempRegValue = 0;
   tempRegValue = (settings.mag.ZPerformance & 0x3) << 2;
@@ -474,7 +510,7 @@ void LSM9DS1::initMag() {
   // CTRL_REG5_M (Default value: 0x00)
   // [0][BDU][0][0][0][0][0][0]
   // BDU - Block data update for magnetic data
-  //	0:continuous, 1:not updated until MSB/LSB are read
+  //  0:continuous, 1:not updated until MSB/LSB are read
   tempRegValue = 0;
   mWriteByte(CTRL_REG5_M, tempRegValue);
 
