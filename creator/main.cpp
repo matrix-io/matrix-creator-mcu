@@ -60,7 +60,7 @@ void psram_read(uint8_t mem_offset, char *data, uint8_t len) {
   register char *psram = (char *)PSRAM_BASE_ADDRESS;
 
   for (int i = 0; i < len; i++) {
-    data[len - 1 - i] = psram[mem_offset + i];
+    data[i] = psram[mem_offset + i];
   }
 }
 
@@ -116,14 +116,63 @@ static msg_t IMUThread(void *arg) {
   // iCompass maghead; 
   // maghead = iCompass(MAG_DEC);
 
+  data.yaw = 0;
+  data.pitch = 0;
+  data.roll = 0;
+  data.accel_x = 0;
+  data.accel_y = 0;
+  data.accel_z = 0;
+  data.gyro_x = 0;
+  data.gyro_y = 0;
+  data.gyro_z = 0;
+  data.mag_x = 0;
+  data.mag_y = 0;
+  data.mag_z = 0;
+  data.mag_offset_x = 0;
+  data.mag_offset_y = 0;
+  data.mag_offset_z = 0;
+
+  psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
+  chThdSleepMilliseconds(1000);
+
+  palSetPad(IOPORT3, 17);
+  chThdSleepMilliseconds(500);
+  palClearPad(IOPORT3, 17); 
+  
+  
   while (true) {
 
     palSetPad(IOPORT3, 17);
     chThdSleepMilliseconds(1);
     palClearPad(IOPORT3, 17); 
 
-    // Getting all the data first, to avoid overwriting the offset values
+    data.yaw = 3.141592654;
+    data.pitch = 0;
+    data.roll = 0;
+    data.accel_x = 0;
+    data.accel_y = 0;
+    data.accel_z = 0;
+    data.gyro_x = 0;
+    data.gyro_y = 0;
+    data.gyro_z = 123.123;
+    data.mag_x = 0;
+    data.mag_y = 0;
+    data.mag_z = 0;
+    data.mag_offset_x = 0;
+    data.mag_offset_y = 0;
+    data.mag_offset_z = 0;
+
+    psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
+    chThdSleepMilliseconds(200);
     psram_read(mem_offset_imu, (char *)&data, sizeof(data));
+    chThdSleepMilliseconds(2000);
+    psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
+    chThdSleepMilliseconds(2000);
+    
+
+
+    // Getting all the data first, to avoid overwriting the offset values
+    // psram_read(mem_offset_imu, (char *)&data, sizeof(data));
 
     // Saving offsets to imu chip
     // imu.SetMagOffsetX(data.mag_offset_x);
@@ -161,9 +210,9 @@ static msg_t IMUThread(void *arg) {
     //                                        data.accel_z * data.accel_z)) *
     //              180.0 / M_PI;
 
-    psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
+    // psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
 
-    chThdSleepMilliseconds(20);
+    // chThdSleepMilliseconds(20);
   }
   return (0);
 }
