@@ -116,103 +116,50 @@ static msg_t IMUThread(void *arg) {
   // iCompass maghead; 
   // maghead = iCompass(MAG_DEC);
 
-  data.yaw = 0;
-  data.pitch = 0;
-  data.roll = 0;
-  data.accel_x = 0;
-  data.accel_y = 0;
-  data.accel_z = 0;
-  data.gyro_x = 0;
-  data.gyro_y = 0;
-  data.gyro_z = 0;
-  data.mag_x = 0;
-  data.mag_y = 0;
-  data.mag_z = 0;
-  data.mag_offset_x = 0;
-  data.mag_offset_y = 0;
-  data.mag_offset_z = 0;
-
-  psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
-  chThdSleepMilliseconds(1000);
-
-  palSetPad(IOPORT3, 17);
-  chThdSleepMilliseconds(500);
-  palClearPad(IOPORT3, 17); 
-  
-  
   while (true) {
 
     palSetPad(IOPORT3, 17);
     chThdSleepMilliseconds(1);
-    palClearPad(IOPORT3, 17); 
-
-    data.yaw = 3.141592654;
-    data.pitch = 0;
-    data.roll = 0;
-    data.accel_x = 0;
-    data.accel_y = 0;
-    data.accel_z = 0;
-    data.gyro_x = 0;
-    data.gyro_y = 0;
-    data.gyro_z = 123.123;
-    data.mag_x = 0;
-    data.mag_y = 0;
-    data.mag_z = 0;
-    data.mag_offset_x = 0;
-    data.mag_offset_y = 0;
-    data.mag_offset_z = 0;
-
-    psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
-    chThdSleepMilliseconds(200);
-    psram_read(mem_offset_imu, (char *)&data, sizeof(data));
-    chThdSleepMilliseconds(2000);
-    psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
-    chThdSleepMilliseconds(2000);
-    
-
-
-    // Getting all the data first, to avoid overwriting the offset values
-    // psram_read(mem_offset_imu, (char *)&data, sizeof(data));
+    palClearPad(IOPORT3, 17);
 
     // Saving offsets to imu chip
     // imu.SetMagOffsetX(data.mag_offset_x);
     // imu.SetMagOffsetY(data.mag_offset_y);
     // imu.SetMagOffsetZ(data.mag_offset_z);
 
-    // // Getting new samples from gyro/mag/accel sensors
-    // imu.readGyro();
-    // data.gyro_x = imu.calcGyro(imu.gx);
-    // data.gyro_y = imu.calcGyro(imu.gy);
-    // data.gyro_z = imu.calcGyro(imu.gz);
+    // Getting new samples from gyro/mag/accel sensors
+    imu.readGyro();
+    data.gyro_x = imu.calcGyro(imu.gx);
+    data.gyro_y = imu.calcGyro(imu.gy);
+    data.gyro_z = imu.calcGyro(imu.gz);
 
-    // imu.readMag();
-    // data.mag_x = imu.calcMag(imu.mx); 
-    // data.mag_y = imu.calcMag(imu.my);
-    // data.mag_z = imu.calcMag(imu.mz);
+    imu.readMag();
+    data.mag_x = imu.calcMag(imu.mx);
+    data.mag_y = imu.calcMag(imu.my);
+    data.mag_z = imu.calcMag(imu.mz);
 
-    // imu.readAccel();
-    // data.accel_x = imu.calcAccel(imu.ax);
-    // data.accel_y = imu.calcAccel(imu.ay);
-    // data.accel_z = imu.calcAccel(imu.az);
-    
-    // // Calc YAW
-    // // method #1 : Simply using current orientation data from the magnetometer.
-    // data.yaw = atan2(data.mag_y, -data.mag_x) * 180.0 / M_PI;
-    // // method #2 : Using iCompass implementation
-    // // data.yaw = maghead.iheading(1, 0, 0,
-    // //   data.accel_x, data.accel_y, data.accel_z,
-    // //   data.mag_x, data.mag_y, data.mag_z);
-    
-    // // Calc ROLL
-    // data.roll = atan2(data.accel_y, data.accel_z) * 180.0 / M_PI;
-    // // Calc PITCH
-    // data.pitch = atan2(-data.accel_x, sqrt(data.accel_y * data.accel_y +
-    //                                        data.accel_z * data.accel_z)) *
-    //              180.0 / M_PI;
+    imu.readAccel();
+    data.accel_x = imu.calcAccel(imu.ax);
+    data.accel_y = imu.calcAccel(imu.ay);
+    data.accel_z = imu.calcAccel(imu.az);
 
-    // psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
+    // Calc YAW
+    // method #1 : Simply using current orientation data from the magnetometer.
+    data.yaw = atan2(data.mag_y, -data.mag_x) * 180.0 / M_PI;
+    // method #2 : Using iCompass implementation
+    // data.yaw = maghead.iheading(1, 0, 0,
+    //   data.accel_x, data.accel_y, data.accel_z,
+    //   data.mag_x, data.mag_y, data.mag_z);
+    // Calc ROLL
+    data.roll = atan2(data.accel_y, data.accel_z) * 180.0 / M_PI;
+    // Calc PITCH
+    data.pitch = atan2(-data.accel_x, sqrt(data.accel_y * data.accel_y +
+                                           data.accel_z * data.accel_z)) *
+                 180.0 / M_PI;
 
-    // chThdSleepMilliseconds(20);
+    psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
+
+    chThdSleepMilliseconds(20);
   }
   return (0);
 }
