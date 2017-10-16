@@ -32,11 +32,10 @@
 #include "./lsm9ds1.h"
 #include "./hts221.h"
 #include "./veml6070.h"
-#include "./iCompass.h"
 
-//Magnetic declination angle for iCompass
-//Degrees for Miami Beach, FL (from http://www.magnetic-declination.com/)
-#define MAG_DEC -6.683333  
+// Magnetic declination angle for iCompass
+// Degrees for Miami Beach, FL (from http://www.magnetic-declination.com/)
+#define MAG_DEC -6.683333
 
 extern "C" {
 #include "atmel_psram.h"
@@ -85,9 +84,9 @@ static msg_t EnvThread(void *arg) {
   mcu_info.version = kFirmwareVersion;
 
   while (true) {
-    // palSetPad(IOPORT3, 17);
-    // chThdSleepMilliseconds(1);
-    // palClearPad(IOPORT3, 17);
+    palSetPad(IOPORT3, 17);
+    chThdSleepMilliseconds(1);
+    palClearPad(IOPORT3, 17);
 
     hts221.GetData(hum.humidity, hum.temperature);
 
@@ -108,13 +107,10 @@ static msg_t EnvThread(void *arg) {
 static WORKING_AREA(waIMUThread, 512);
 static msg_t IMUThread(void *arg) {
   (void)arg;
-  
+
   LSM9DS1 imu(&i2c, IMU_MODE_I2C, 0x6A, 0x1C);
   imu.begin();
   IMUData data;
-  
-  // iCompass maghead; 
-  // maghead = iCompass(MAG_DEC);
 
   // Getting lasts offsets saved in the imu sensor
   float current_offset_x = imu.calcMag(imu.getOffset(X_AXIS));
@@ -122,11 +118,7 @@ static msg_t IMUThread(void *arg) {
   float current_offset_z = imu.calcMag(imu.getOffset(Z_AXIS));
 
   while (true) {
-
-    palSetPad(IOPORT3, 17);
-    chThdSleepMilliseconds(1);
-    palClearPad(IOPORT3, 17);
-
+    
     // Getting all the data first, to avoid overwriting the offset values
     psram_read(mem_offset_imu, (char *)&data, sizeof(data));
 
@@ -142,8 +134,9 @@ static msg_t IMUThread(void *arg) {
       imu.SetMagOffsetX(data.mag_offset_x);
       imu.SetMagOffsetY(data.mag_offset_y);
       // TODO (yoel.castillo): SetMagOffsetZ currently not working
-      // imu.SetMagOffsetZ(data.mag_offset_z);  
+      // imu.SetMagOffsetZ(data.mag_offset_z);
 
+      // Blinking two times
       palClearPad(IOPORT3, 17);
       chThdSleepMilliseconds(100);
       palSetPad(IOPORT3, 17);
@@ -172,20 +165,13 @@ static msg_t IMUThread(void *arg) {
     data.accel_y = imu.calcAccel(imu.ay);
     data.accel_z = imu.calcAccel(imu.az);
 
-    // Calc YAW
-    // method #1 : Simply using current orientation data from the magnetometer.
     data.yaw = atan2(data.mag_y, -data.mag_x) * 180.0 / M_PI;
-    // method #2 : Using iCompass implementation
-    // data.yaw = maghead.iheading(1, 0, 0,
-    //   data.accel_x, data.accel_y, data.accel_z,
-    //   data.mag_x, data.mag_y, data.mag_z);
-    // Calc ROLL
     data.roll = atan2(data.accel_y, data.accel_z) * 180.0 / M_PI;
-    // Calc PITCH
     data.pitch = atan2(-data.accel_x, sqrt(data.accel_y * data.accel_y +
                                            data.accel_z * data.accel_z)) *
                  180.0 / M_PI;
 
+    // Saving data to FPGA
     psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
 
     chThdSleepMilliseconds(20);
