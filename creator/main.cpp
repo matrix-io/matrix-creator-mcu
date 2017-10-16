@@ -116,16 +116,45 @@ static msg_t IMUThread(void *arg) {
   // iCompass maghead; 
   // maghead = iCompass(MAG_DEC);
 
+  // Getting lasts offsets saved in the imu sensor
+  float current_offset_x = imu.calcMag(imu.getOffset(X_AXIS));
+  float current_offset_y = imu.calcMag(imu.getOffset(Y_AXIS));
+  float current_offset_z = imu.calcMag(imu.getOffset(Z_AXIS));
+
   while (true) {
 
     palSetPad(IOPORT3, 17);
     chThdSleepMilliseconds(1);
     palClearPad(IOPORT3, 17);
 
-    // Saving offsets to imu chip
-    // imu.SetMagOffsetX(data.mag_offset_x);
-    // imu.SetMagOffsetY(data.mag_offset_y);
-    // imu.SetMagOffsetZ(data.mag_offset_z);
+    // Getting all the data first, to avoid overwriting the offset values
+    psram_read(mem_offset_imu, (char *)&data, sizeof(data));
+
+    // Checking if there is a new offset in the PFGA from HAL
+    if (current_offset_x != data.mag_offset_x ||
+        current_offset_y != data.mag_offset_y ||
+        current_offset_z != data.mag_offset_z) {
+      // Update current offsets
+      current_offset_x = data.mag_offset_x;
+      current_offset_y = data.mag_offset_y;
+      current_offset_z = data.mag_offset_z;
+      // Update offsets in the imu sensor
+      imu.SetMagOffsetX(data.mag_offset_x);
+      imu.SetMagOffsetY(data.mag_offset_y);
+      // TODO (yoel.castillo): SetMagOffsetZ currently not working
+      // imu.SetMagOffsetZ(data.mag_offset_z);  
+
+      palClearPad(IOPORT3, 17);
+      chThdSleepMilliseconds(100);
+      palSetPad(IOPORT3, 17);
+      chThdSleepMilliseconds(100);
+      palClearPad(IOPORT3, 17);
+      chThdSleepMilliseconds(100);
+      palSetPad(IOPORT3, 17);
+      chThdSleepMilliseconds(100);
+      palClearPad(IOPORT3, 17);
+      chThdSleepMilliseconds(100);
+    }
 
     // Getting new samples from gyro/mag/accel sensors
     imu.readGyro();
