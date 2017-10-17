@@ -33,10 +33,6 @@
 #include "./hts221.h"
 #include "./veml6070.h"
 
-// Magnetic declination angle for iCompass
-// Degrees for Miami Beach, FL (from http://www.magnetic-declination.com/)
-#define MAG_DEC -6.683333
-
 extern "C" {
 #include "atmel_psram.h"
 }
