@@ -42,6 +42,9 @@ struct IMUData {
   float mag_x;
   float mag_y;
   float mag_z;
+  float mag_offset_x;
+  float mag_offset_y;
+  float mag_offset_z;
 };
 
 struct MCUData {
