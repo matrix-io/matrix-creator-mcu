@@ -135,6 +135,18 @@ static msg_t IMUThread(void *arg) {
       imu.setMagOffsetY(data.mag_offset_y);
       // TODO (yoel.castillo): SetMagOffsetZ currently not working
       // imu.SetMagOffsetZ(data.mag_offset_z);
+
+      // Blinking two times
+      palClearPad(IOPORT3, 17);
+      chThdSleepMilliseconds(100);
+      palSetPad(IOPORT3, 17);
+      chThdSleepMilliseconds(100);
+      palClearPad(IOPORT3, 17);
+      chThdSleepMilliseconds(100);
+      palSetPad(IOPORT3, 17);
+      chThdSleepMilliseconds(100);
+      palClearPad(IOPORT3, 17);
+      chThdSleepMilliseconds(100);
     }
 
     // Getting new samples from gyro/mag/accel sensors
