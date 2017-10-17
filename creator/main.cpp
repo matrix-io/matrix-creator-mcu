@@ -107,16 +107,35 @@ static msg_t EnvThread(void *arg) {
 static WORKING_AREA(waIMUThread, 512);
 static msg_t IMUThread(void *arg) {
   (void)arg;
+
   LSM9DS1 imu(&i2c, IMU_MODE_I2C, 0x6A, 0x1C);
-
   imu.begin();
-
   IMUData data;
+
+  // Getting lasts offsets saved in the imu sensor
+  float current_offset_x = imu.calcMag(imu.getOffset(X_AXIS));
+  float current_offset_y = imu.calcMag(imu.getOffset(Y_AXIS));
+  float current_offset_z = imu.calcMag(imu.getOffset(Z_AXIS));
 
   while (true) {
     
     // Getting all the data first, to avoid overwriting the offset values
     psram_read(mem_offset_imu, (char *)&data, sizeof(data));
+
+    // Checking if there is a new offset in the PFGA from HAL
+    if (current_offset_x != data.mag_offset_x ||
+        current_offset_y != data.mag_offset_y ||
+        current_offset_z != data.mag_offset_z) {
+      // Update current offsets
+      current_offset_x = data.mag_offset_x;
+      current_offset_y = data.mag_offset_y;
+      current_offset_z = data.mag_offset_z;
+      // Update offsets in the imu sensor
+      imu.setMagOffsetX(data.mag_offset_x);
+      imu.setMagOffsetY(data.mag_offset_y);
+      // TODO (yoel.castillo): SetMagOffsetZ currently not working
+      // imu.SetMagOffsetZ(data.mag_offset_z);
+    }
 
     // Getting new samples from gyro/mag/accel sensors
     imu.readGyro();
