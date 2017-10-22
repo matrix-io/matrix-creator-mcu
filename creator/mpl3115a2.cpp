@@ -30,6 +30,7 @@ const uint8_t MPL3115A2_REGISTER_STATUS = 0x00;
 const uint8_t MPL3115A2_WHOAMI = 0x0C;
 const uint8_t MPL3115A2_REGISTER_PRESSURE_MSB = 0x01;
 const uint8_t MPL3115A2_REGISTER_TEMP_MSB = 0x04;
+const int MPL3115A2_RETRIES = 10;
 
 MPL3115A2::MPL3115A2(I2C* i2c, uint8_t address) : i2c_(i2c), address_(address) {
   CTRL_REG1_.data = 0;
@@ -75,7 +76,7 @@ float MPL3115A2::GetPressure() {
   while (true) {
     DR_STATUS_.data = Read(MPL3115A2_REGISTER_STATUS);
     if (DR_STATUS_.fields.PDR) break;
-    if (count==10) break;
+    if (count == MPL3115A2_RETRIES) break;
     chThdSleepMilliseconds(50);
     count++;
   }
@@ -105,7 +106,7 @@ float MPL3115A2::GetAltitude() {
   while (true) {
     DR_STATUS_.data = Read(MPL3115A2_REGISTER_STATUS);
     if (DR_STATUS_.fields.PDR) break;
-    if (count == 10) break;
+    if (count == MPL3115A2_RETRIES) break;
     chThdSleepMilliseconds(50);
     count++;
   }
@@ -134,7 +135,7 @@ float MPL3115A2::GetTemperature() {
   while (true) {
     DR_STATUS_.data = Read(MPL3115A2_REGISTER_STATUS);
     if (DR_STATUS_.fields.TDR) break;
-    if (count==10) break;
+    if (count == MPL3115A2_RETRIES) break;
     chThdSleepMilliseconds(50);
     count++;
   }
