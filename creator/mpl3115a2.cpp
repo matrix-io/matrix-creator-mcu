@@ -60,6 +60,7 @@ bool MPL3115A2::Begin() {
 /* Gets pressure level in kPa */
 float MPL3115A2::GetPressure() {
   uint32_t pressure;
+  int count = 0;
 
   CTRL_REG1_.data = Read(MPL3115A2_CTRL_REG1);
   CTRL_REG1_.fields.OST = 0;
@@ -74,7 +75,9 @@ float MPL3115A2::GetPressure() {
   while (true) {
     DR_STATUS_.data = Read(MPL3115A2_REGISTER_STATUS);
     if (DR_STATUS_.fields.PDR) break;
-    chThdSleepMilliseconds(100);
+    if (count==10) break;
+    chThdSleepMilliseconds(50);
+    count++;
   }
   uint8_t data[3];
   i2c_->ReadBytes(address_, MPL3115A2_REGISTER_PRESSURE_MSB, (uint8_t*)data,
@@ -87,6 +90,7 @@ float MPL3115A2::GetPressure() {
 
 float MPL3115A2::GetAltitude() {
   int32_t altitude;
+  int count = 0;
 
   CTRL_REG1_.data = Read(MPL3115A2_CTRL_REG1);
   CTRL_REG1_.fields.OST = 0;
@@ -101,7 +105,9 @@ float MPL3115A2::GetAltitude() {
   while (true) {
     DR_STATUS_.data = Read(MPL3115A2_REGISTER_STATUS);
     if (DR_STATUS_.fields.PDR) break;
-    chThdSleepMilliseconds(100);
+    if (count == 10) break;
+    chThdSleepMilliseconds(50);
+    count++;
   }
   uint8_t data[3];
   i2c_->ReadBytes(address_, MPL3115A2_REGISTER_PRESSURE_MSB, (uint8_t*)data,
@@ -114,7 +120,7 @@ float MPL3115A2::GetAltitude() {
 
 /* Gets the temperature in °C */
 float MPL3115A2::GetTemperature() {
-  int count;
+  int count=0;
 
   CTRL_REG1_.data = Read(MPL3115A2_CTRL_REG1);
   CTRL_REG1_.fields.OST = 0;
@@ -128,8 +134,8 @@ float MPL3115A2::GetTemperature() {
   while (true) {
     DR_STATUS_.data = Read(MPL3115A2_REGISTER_STATUS);
     if (DR_STATUS_.fields.TDR) break;
-    chThdSleepMilliseconds(50);
     if (count==10) break;
+    chThdSleepMilliseconds(50);
     count++;
   }
   uint8_t data[2];
