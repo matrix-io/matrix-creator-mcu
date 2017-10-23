@@ -8,25 +8,17 @@
 
 #include "chtypes.h"
 
-const int16_t mem_offset_uv = 0x0;
-const int16_t mem_offset_press = 0x10;
-const int16_t mem_offset_humidity = 0x20;
+const int16_t mem_offset_env = 0x00;
 const int16_t mem_offset_imu = 0x30;
 const int16_t mem_offset_mcu = 0x90;
 
-struct UVData {
+struct EnvData {
   int UV;
-};
-
-struct PressureData {
-  float altitude;
-  float pressure;
-  float temperature;
-};
-
-struct HumidityData {
-  float humidity;
-  float temperature;
+  int altitude;
+  int pressure;
+  int temperature_mpl;
+  int humidity;
+  int temperature_hts;
 };
 
 struct IMUData {

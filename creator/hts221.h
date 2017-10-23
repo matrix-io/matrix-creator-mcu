@@ -32,7 +32,7 @@ class HTS221 {
  public:
   HTS221(I2C* i2c, uint8_t address = 0x5F);
   bool Begin();
-  void GetData(float& humidity, float& temperature);
+  void GetData(int& humidity, int& temperature);
 
  private:
   void Write(uint8_t a, uint8_t d);

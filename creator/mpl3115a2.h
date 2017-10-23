@@ -71,9 +71,9 @@ class MPL3115A2 {
  public:
   MPL3115A2(I2C* i2c, uint8_t address = 0x60);
   bool Begin();
-  float GetPressure();
-  float GetAltitude();
-  float GetTemperature();
+  int GetPressure();
+  int GetAltitude();
+  int GetTemperature();
 
  private:
   void Write(uint8_t a, uint8_t d);

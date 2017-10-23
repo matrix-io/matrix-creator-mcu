@@ -71,9 +71,7 @@ static msg_t EnvThread(void *arg) {
   hts221.Begin();
   veml6070.Begin();
 
-  PressureData press;
-  HumidityData hum;
-  UVData uv;
+  EnvData env;
   MCUData mcu_info;
 
   mcu_info.ID = kFirmwareCreatorID;
@@ -84,18 +82,16 @@ static msg_t EnvThread(void *arg) {
     chThdSleepMilliseconds(1);
     palClearPad(IOPORT3, 17);
 
-    hts221.GetData(hum.humidity, hum.temperature);
+    hts221.GetData(env.humidity, env.temperature_hts);
 
-    press.altitude = mpl3115a2.GetAltitude();
-    press.pressure = mpl3115a2.GetPressure();
-    press.temperature = mpl3115a2.GetTemperature();
+    env.altitude = mpl3115a2.GetAltitude();
+    env.pressure = mpl3115a2.GetPressure();
+    env.temperature_mpl = mpl3115a2.GetTemperature();
 
-    uv.UV = veml6070.GetUV();
+    env.UV = veml6070.GetUV();
 
     psram_copy(mem_offset_mcu, (char *)&mcu_info, sizeof(mcu_info));
-    psram_copy(mem_offset_press, (char *)&press, sizeof(press));
-    psram_copy(mem_offset_humidity, (char *)&hum, sizeof(hum));
-    psram_copy(mem_offset_uv, (char *)&uv, sizeof(uv));
+    psram_copy(mem_offset_env, (char *)&env, sizeof(env));
   }
   return (0);
 }
@@ -134,15 +130,15 @@ static msg_t IMUThread(void *arg) {
 
       // Blinking two times
       palClearPad(IOPORT3, 17);
-      chThdSleepMilliseconds(100);
+      chThdSleepMilliseconds(50);
       palSetPad(IOPORT3, 17);
-      chThdSleepMilliseconds(100);
+      chThdSleepMilliseconds(50);
       palClearPad(IOPORT3, 17);
-      chThdSleepMilliseconds(100);
+      chThdSleepMilliseconds(50);
       palSetPad(IOPORT3, 17);
-      chThdSleepMilliseconds(100);
+      chThdSleepMilliseconds(50);
       palClearPad(IOPORT3, 17);
-      chThdSleepMilliseconds(100);
+      chThdSleepMilliseconds(50);
     }
 
     // Getting new samples from gyro/mag/accel sensors

@@ -65,7 +65,7 @@ bool HTS221::Begin() {
   return true;
 }
 
-void HTS221::GetData(float& humidity, float& temperature) {
+void HTS221::GetData(int& humidity, int& temperature) {
   uint8_t data[4];
 
   Read(0x28 | 0x80, data, 4);
