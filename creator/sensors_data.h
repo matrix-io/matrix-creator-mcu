@@ -15,7 +15,7 @@ const int16_t mem_offset_imu = 0x30;
 const int16_t mem_offset_mcu = 0x90;
 
 struct UVData {
-  float UV;
+  int UV;
 };
 
 struct PressureData {
