@@ -22,21 +22,21 @@ struct EnvData {
 };
 
 struct IMUData {
-  float yaw;
-  float pitch;
-  float roll;
-  float accel_x;
-  float accel_y;
-  float accel_z;
-  float gyro_x;
-  float gyro_y;
-  float gyro_z;
-  float mag_x;
-  float mag_y;
-  float mag_z;
+  int accel_x;
+  int accel_y;
+  int accel_z;
+  int gyro_x;
+  int gyro_y;
+  int gyro_z;
+  int mag_x;
+  int mag_y;
+  int mag_z;
   float mag_offset_x;
   float mag_offset_y;
   float mag_offset_z;
+  int yaw;
+  int pitch;
+  int roll;
 };
 
 struct MCUData {

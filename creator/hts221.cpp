@@ -23,6 +23,7 @@
  */
 
 #include "ch.h"
+#include "./common_data.h"
 #include "./hts221.h"
 
 namespace creator {
@@ -76,8 +77,8 @@ void HTS221::GetData(int& humidity, int& temperature) {
   if (temp > 32767) temp -= 65536;
   humidity = ((1.0 * H1) - (1.0 * H0)) * (1.0 * hum - 1.0 * H2) /
                  (1.0 * H3 - 1.0 * H2) +
-             (1.0 * H0);
-  temperature = ((T1 - T0) / 8.0) * (temp - T2) / (T3 - T2) + (T0 / 8.0);
+             (1.0 * H0) * factor_scale;
+  temperature = (((T1 - T0) / 8.0) * (temp - T2)  / (T3 - T2) + (T0 / 8.0)) * factor_scale;
 }
 
 uint8_t HTS221::Read(uint8_t a) { return i2c_->ReadByte(address_, a); }

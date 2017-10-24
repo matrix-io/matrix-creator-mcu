@@ -20,6 +20,7 @@
 
 #include "ch.h"
 #include "hal.h"
+#include "./common_data.h"
 #include "./mpl3115a2.h"
 
 namespace creator {
@@ -86,7 +87,7 @@ int MPL3115A2::GetPressure() {
 
   pressure = ((data[0] << 16) | (data[1] << 8) | data[2]) >> 4;
 
-  return pressure / 4.0;
+  return pressure * factor_scale / 4.0;
 }
 
 int MPL3115A2::GetAltitude() {
@@ -116,7 +117,7 @@ int MPL3115A2::GetAltitude() {
 
   altitude = ((data[0] << 16) | (data[1] << 8) | data[2]) >> 4;
   if (altitude & 0x80000) altitude |= 0xFFF00000;
-  return altitude / 16.0;
+  return altitude * factor_scale / 16.0;
 }
 
 /* Gets the temperature in °C */
@@ -143,7 +144,7 @@ int MPL3115A2::GetTemperature() {
   i2c_->ReadBytes(address_, MPL3115A2_REGISTER_TEMP_MSB, (uint8_t*)data,
                   sizeof(data));
 
-  return (((data[0] << 8) | data[1]) >> 4) / 16.0;
+  return (((data[0] << 8) | data[1]) >> 4) * factor_scale / 16.0;
 }
 
 uint8_t MPL3115A2::Read(uint8_t a) { return i2c_->ReadByte(address_, a); }

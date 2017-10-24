@@ -23,6 +23,7 @@ Distributed as-is; no warranty is given.
 
 #include "lsm9ds1_types.h"
 #include "lsm9ds1_registers.h"
+#include "./common_data.h"
 #include "lsm9ds1.h"
 
 #define LSM9DS1_COMMUNICATION_TIMEOUT 1000
@@ -579,19 +580,19 @@ int16_t LSM9DS1::readGyro(lsm9ds1_axis axis) {
   return value;
 }
 
-float LSM9DS1::calcGyro(int16_t gyro) {
+int LSM9DS1::calcGyro(int16_t gyro) {
   // Return the gyro raw reading times our pre-calculated DPS / (ADC tick):
-  return gRes * gyro;
+  return (int)((gRes * gyro)*factor_scale);
 }
 
-float LSM9DS1::calcAccel(int16_t accel) {
+int LSM9DS1::calcAccel(int16_t accel) {
   // Return the accel raw reading times our pre-calculated g's / (ADC tick):
-  return aRes * accel;
+  return (int)((aRes * accel)*factor_scale);
 }
 
-float LSM9DS1::calcMag(int16_t mag) {
+int LSM9DS1::calcMag(int16_t mag) {
   // Return the mag raw reading times our pre-calculated Gs / (ADC tick):
-  return mRes * mag;
+  return (int)((mRes * mag)*factor_scale);
 }
 
 void LSM9DS1::setGyroScale(uint16_t gScl) {
