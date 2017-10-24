@@ -380,16 +380,16 @@ void LSM9DS1::magSetOffset(uint8_t axis, int16_t offset) {
   mWriteByte(OFFSET_X_REG_H_M + (2 * axis), msb);
 }
 
-void LSM9DS1::setMagOffsetX(float offset) {
-  setMagOffsetX((int16_t)(offset / mRes));
+void LSM9DS1::setMagOffsetX(int offset) {
+  setMagOffsetX((int16_t)((offset/factor_scale)/ mRes));
 }
 
-void LSM9DS1::setMagOffsetY(float offset) {
-  setMagOffsetY((int16_t)(offset / mRes));
+void LSM9DS1::setMagOffsetY(int offset) {
+  setMagOffsetY((int16_t)((offset/factor_scale) / mRes));
 }
 
-void LSM9DS1::setMagOffsetZ(float offset) {
-  setMagOffsetZ((int16_t)(offset / mRes));
+void LSM9DS1::setMagOffsetZ(int offset) {
+  setMagOffsetZ((int16_t)((offset/factor_scale) / mRes));
 }
 
 void LSM9DS1::setMagOffsetX(int16_t offset) {

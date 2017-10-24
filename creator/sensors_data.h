@@ -31,9 +31,9 @@ struct IMUData {
   int mag_x;
   int mag_y;
   int mag_z;
-  float mag_offset_x;
-  float mag_offset_y;
-  float mag_offset_z;
+  int mag_offset_x;
+  int mag_offset_y;
+  int mag_offset_z;
   int yaw;
   int pitch;
   int roll;

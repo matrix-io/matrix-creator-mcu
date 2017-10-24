@@ -76,9 +76,9 @@ class LSM9DS1 {
 
   void calibrate(bool autoCalc = true);
   void calibrateMag(bool loadIn = true);
-  void setMagOffsetX(float offset);
-  void setMagOffsetY(float offset);
-  void setMagOffsetZ(float offset);
+  void setMagOffsetX(int offset);
+  void setMagOffsetY(int offset);
+  void setMagOffsetZ(int offset);
   void setMagOffsetX(int16_t offset);
   void setMagOffsetY(int16_t offset);
   void setMagOffsetZ(int16_t offset);
