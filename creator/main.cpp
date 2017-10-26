@@ -116,24 +116,15 @@ static msg_t IMUThread(void *arg) {
     // Checking if there is a new calibration ready
     if (data.mag_offset_wr_flag == OFFSET_WRITE_ENABLE) {
       // resetting write enable flag
-      data.mag_offset_wr_flag = 0x25352534;
+      data.mag_offset_wr_flag = OFFSET_READ_ENABLE;
       // Copy offsets in the imu sensor
       imu.setMagOffsetX(data.mag_offset_x);
       imu.setMagOffsetY(data.mag_offset_y);
-      // TODO (yoel.castillo): SetMagOffsetZ currently not working
-      // imu.SetMagOffsetZ(data.mag_offset_z);
-
-      // Blinking two times
-      palClearPad(IOPORT3, 17);
-      chThdSleepMilliseconds(100);
-      palSetPad(IOPORT3, 17);
-      chThdSleepMilliseconds(100);
-      palClearPad(IOPORT3, 17);
-      chThdSleepMilliseconds(100);
-      palSetPad(IOPORT3, 17);
-      chThdSleepMilliseconds(100);
-      palClearPad(IOPORT3, 17);
-      chThdSleepMilliseconds(100);
+      imu.setMagOffsetZ(data.mag_offset_z);
+    } else {
+      data.mag_offset_x = imu.calcMag(imu.getOffset(X_AXIS));
+      data.mag_offset_y = imu.calcMag(imu.getOffset(Y_AXIS));
+      data.mag_offset_z = imu.calcMag(imu.getOffset(Z_AXIS));
     }
 
     // Getting new samples from gyro/mag/accel sensors

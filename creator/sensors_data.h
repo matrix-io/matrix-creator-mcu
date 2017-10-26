@@ -15,7 +15,7 @@ const int16_t mem_offset_imu = 0x30;
 const int16_t mem_offset_mcu = 0x90;
 
 const int32_t OFFSET_WRITE_ENABLE = 0x25352535;
-const int32_t OFFSET_WRITE_DISABLE = 0x25352534;
+const int32_t OFFSET_READ_ENABLE = 0x25352534;
 
 struct UVData {
   int UV;
