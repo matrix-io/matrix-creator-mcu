@@ -46,7 +46,7 @@ class VEML6070 {
  public:
   VEML6070(I2C* i2c);
   bool Begin();
-  int GetUV();
+  float GetUV();
 
  private:
   I2C* i2c_;
