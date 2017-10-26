@@ -33,6 +33,10 @@
 #include "./hts221.h"
 #include "./veml6070.h"
 
+#include "efc.h"
+#include "flashd.h"
+
+
 extern "C" {
 #include "atmel_psram.h"
 }
