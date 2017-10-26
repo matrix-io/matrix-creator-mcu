@@ -36,6 +36,8 @@
 #include "efc.h"
 #include "flashd.h"
 
+#define FLASH_PROGRAM_ADDRESS_START  0x41FC00 
+#define FLASH_PROGRAM_ADDRESS_END    0x41FFFF
 
 extern "C" {
 #include "atmel_psram.h"
@@ -111,6 +113,8 @@ static msg_t IMUThread(void *arg) {
   LSM9DS1 imu(&i2c, IMU_MODE_I2C, 0x6A, 0x1C);
   imu.begin();
   IMUData data;
+
+  unsigned char *flash_data = (unsigned char*)FLASH_PROGRAM_ADDRESS_START;
 
   while (true) {
     

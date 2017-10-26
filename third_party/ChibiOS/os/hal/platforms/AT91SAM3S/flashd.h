@@ -1,7 +1,7 @@
 /* ----------------------------------------------------------------------------
  *         ATMEL Microcontroller Software Support
  * ----------------------------------------------------------------------------
- * Copyright (c) 2010, Atmel Corporation
+ * Copyright (c) 2009, Atmel Corporation
  *
  * All rights reserved.
  *
@@ -76,3 +76,4 @@ extern uint32_t FLASHD_ReadUniqueID( uint32_t* pdwUniqueID ) ;
 #endif
 
 #endif /* #ifndef _FLASHD_ */
+
