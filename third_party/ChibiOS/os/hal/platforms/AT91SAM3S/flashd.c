@@ -73,7 +73,12 @@
 /*----------------------------------------------------------------------------
  *        Headers
  *----------------------------------------------------------------------------*/
-#include "chip.h"
+#include "ch.h"
+#include "hal.h"
+#include "board.h"
+#include "efc.h"
+#include "flashd.h"
+
 
 #include <string.h>
 #include <assert.h>
@@ -83,9 +88,9 @@
  *----------------------------------------------------------------------------*/
 
 //static NO_INIT uint8_t _aucPageBuffer[IFLASH_PAGE_SIZE] ;
-static NO_INIT uint32_t _adwPageBuffer[IFLASH_PAGE_SIZE/4] ;
+static uint32_t _adwPageBuffer[IFLASH_PAGE_SIZE/4] ;
 static uint8_t* _aucPageBuffer = (uint8_t*)_adwPageBuffer;
-static NO_INIT uint32_t _dwUseIAP ;
+static uint32_t _dwUseIAP ;
 
 /*----------------------------------------------------------------------------
  *        Local macros
@@ -132,7 +137,6 @@ static void ComputeLockRange( uint32_t dwStart, uint32_t dwEnd, uint32_t *pdwAct
     // Store actual page numbers
     EFC_ComputeAddress( pStartEfc, wActualStartPage, 0, pdwActualStart ) ;
     EFC_ComputeAddress( pEndEfc, wActualEndPage, 0, pdwActualEnd ) ;
-    TRACE_DEBUG( "Actual lock range is 0x%06X - 0x%06X\n\r", *pdwActualStart, *pdwActualEnd ) ;
 }
 
 

@@ -36,12 +36,11 @@
 #include "efc.h"
 #include "flashd.h"
 
-#define FLASH_PROGRAM_ADDRESS_START  0x41FC00 
-#define FLASH_PROGRAM_ADDRESS_END    0x41FFFF
-
 extern "C" {
 #include "atmel_psram.h"
 }
+
+#define BOARD_MCK 64000000
 
 const uint32_t kFirmwareCreatorID = 0x10;
 const uint32_t kFirmwareVersion = 0x171017; /* 0xYYMMDD */
@@ -114,9 +113,38 @@ static msg_t IMUThread(void *arg) {
   imu.begin();
   IMUData data;
 
-  unsigned char *flash_data = (unsigned char*)FLASH_PROGRAM_ADDRESS_START;
+  uint32_t i;
+  uint8_t error;
+  uint32_t pBuffer[IFLASH_PAGE_SIZE / 4];
+  uint32_t lastPageAddress;
+  volatile uint32_t *pLastPageData;
+    
+  lastPageAddress = IFLASH_ADDR + IFLASH_SIZE - IFLASH_PAGE_SIZE;
+  pLastPageData = (volatile uint32_t *) lastPageAddress;
+
+
 
   while (true) {
+
+      error =
+      FLASHD_Unlock(lastPageAddress, lastPageAddress + IFLASH_PAGE_SIZE, 0, 0);
+
+  for (i = 0; i < (IFLASH_PAGE_SIZE / 4); i++) {
+    pBuffer[i] = 1 << (i % 32);
+  }
+  error = FLASHD_Write(lastPageAddress, pBuffer, IFLASH_PAGE_SIZE);
+
+  for (i = 0; i < (IFLASH_PAGE_SIZE / 4); i++) {
+    if (pLastPageData[i] == (uint32_t)(1 << (i % 32))) {
+      palSetPad(IOPORT3, 17);
+      chThdSleepMilliseconds(20);
+      palClearPad(IOPORT3, 17);
+      chThdSleepMilliseconds(20);
+      palClearPad(IOPORT3, 17);
+      };
+  }
+
+  error = FLASHD_Lock( lastPageAddress, lastPageAddress + IFLASH_PAGE_SIZE, 0, 0 ) ;
     
     // Getting all the data first, to avoid overwriting the offset values
     psram_read(mem_offset_imu, (char *)&data, sizeof(data));
@@ -128,7 +156,7 @@ static msg_t IMUThread(void *arg) {
       // Copy offsets in the imu sensor
       imu.setMagOffsetX(data.mag_offset_x);
       imu.setMagOffsetY(data.mag_offset_y);
-      imu.setMagOffsetZ(data.mag_offset_z);
+      //imu.setMagOffsetZ(data.mag_offset_z);
     } else {
       data.mag_offset_x = imu.calcMag(imu.getOffset(X_AXIS));
       data.mag_offset_y = imu.calcMag(imu.getOffset(Y_AXIS));
