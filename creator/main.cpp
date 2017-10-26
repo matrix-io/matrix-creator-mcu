@@ -108,25 +108,16 @@ static msg_t IMUThread(void *arg) {
   imu.begin();
   IMUData data;
 
-  // Getting lasts offsets saved in the imu sensor
-  float current_offset_x = imu.calcMag(imu.getOffset(X_AXIS));
-  float current_offset_y = imu.calcMag(imu.getOffset(Y_AXIS));
-  float current_offset_z = imu.calcMag(imu.getOffset(Z_AXIS));
-
   while (true) {
     
     // Getting all the data first, to avoid overwriting the offset values
     psram_read(mem_offset_imu, (char *)&data, sizeof(data));
 
-    // Checking if there is a new offset in the PFGA from HAL
-    if (current_offset_x != data.mag_offset_x ||
-        current_offset_y != data.mag_offset_y ||
-        current_offset_z != data.mag_offset_z) {
-      // Update current offsets
-      current_offset_x = data.mag_offset_x;
-      current_offset_y = data.mag_offset_y;
-      current_offset_z = data.mag_offset_z;
-      // Update offsets in the imu sensor
+    // Checking if there is a new calibration ready
+    if (data.mag_offset_wr_flag == OFFSET_WRITE_ENABLE) {
+      // resetting write enable flag
+      data.mag_offset_wr_flag = 0x25352534;
+      // Copy offsets in the imu sensor
       imu.setMagOffsetX(data.mag_offset_x);
       imu.setMagOffsetY(data.mag_offset_y);
       // TODO (yoel.castillo): SetMagOffsetZ currently not working
