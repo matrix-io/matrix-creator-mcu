@@ -158,9 +158,6 @@ extern void EFC_TranslateAddress( Efc** ppEfc, uint32_t dwAddress, uint16_t* pwP
     uint16_t wPage ;
     uint16_t wOffset ;
 
-    assert( dwAddress >= IFLASH_ADDR ) ;
-    assert( dwAddress <= (IFLASH_ADDR + IFLASH_SIZE) ) ;
-
     pEfc = EFC ;
     wPage = (dwAddress - IFLASH_ADDR) / IFLASH_PAGE_SIZE;
     wOffset = (dwAddress - IFLASH_ADDR) % IFLASH_PAGE_SIZE;
@@ -227,12 +224,10 @@ extern void EFC_StartCommand( Efc* efc, uint32_t dwCommand, uint32_t dwArgument 
         case EFC_FCMD_EWPL:
         case EFC_FCMD_SLB:
         case EFC_FCMD_CLB:
-            assert( dwArgument < IFLASH_NB_OF_PAGES ) ;
         break ;
 
         case EFC_FCMD_SFB:
         case EFC_FCMD_CFB:
-            assert( dwArgument < 2 ) ;
         break;
 
         case EFC_FCMD_GETD:
@@ -240,14 +235,12 @@ extern void EFC_StartCommand( Efc* efc, uint32_t dwCommand, uint32_t dwArgument 
         case EFC_FCMD_GLB:
         case EFC_FCMD_GFB:
         case EFC_FCMD_STUI:
-            assert( dwArgument == 0 ) ;
         break;
 
         default: assert( 0 ) ;
     }
 
     /* Start command Embedded flash */
-    assert( (efc->EEFC_FSR & EEFC_FMR_FRDY) == EEFC_FMR_FRDY ) ;
     efc->EEFC_FCR = EEFC_FCR_FKEY(0x5A) | EEFC_FCR_FARG(dwArgument) | EEFC_FCR_FCMD(dwCommand) ;
 }
 
@@ -277,7 +270,62 @@ extern uint32_t EFC_PerformCommand( Efc* efc, uint32_t dwCommand, uint32_t dwArg
     {
         uint32_t dwStatus ;
 
+
+
+      chprintf((BaseChannel *)&SD1, "Argument: %x \n\r", dwArgument);
+
+      chprintf((BaseChannel *)&SD1, "Command: %x \n\r", dwCommand);
+
+          palSetPad(IOPORT3, 17);
+      chThdSleepMilliseconds(200);
+      palClearPad(IOPORT3, 17);
+      chThdSleepMilliseconds(200);
+      palClearPad(IOPORT3, 17);
+
+          palSetPad(IOPORT3, 17);
+      chThdSleepMilliseconds(200);
+      palClearPad(IOPORT3, 17);
+      chThdSleepMilliseconds(200);
+      palClearPad(IOPORT3, 17);
+          palSetPad(IOPORT3, 17);
+      chThdSleepMilliseconds(200);
+      palClearPad(IOPORT3, 17);
+      chThdSleepMilliseconds(200);
+      palClearPad(IOPORT3, 17);
+
+          palSetPad(IOPORT3, 17);
+      chThdSleepMilliseconds(200);
+      palClearPad(IOPORT3, 17);
+      chThdSleepMilliseconds(200);
+      palClearPad(IOPORT3, 17);
+          palSetPad(IOPORT3, 17);
+      chThdSleepMilliseconds(200);
+      palClearPad(IOPORT3, 17);
+      chThdSleepMilliseconds(200);
+      palClearPad(IOPORT3, 17);
+          palSetPad(IOPORT3, 17);
+      chThdSleepMilliseconds(200);
+      palClearPad(IOPORT3, 17);
+      chThdSleepMilliseconds(200);
+      palClearPad(IOPORT3, 17);
+          palSetPad(IOPORT3, 17);
+      chThdSleepMilliseconds(200);
+      palClearPad(IOPORT3, 17);
+      chThdSleepMilliseconds(200);
+      palClearPad(IOPORT3, 17);
+
+
+
+
+
+
         efc->EEFC_FCR = EEFC_FCR_FKEY(0x5A) | EEFC_FCR_FARG(dwArgument) | EEFC_FCR_FCMD(dwCommand) ;
+       
+          palSetPad(IOPORT3, 17);
+      chThdSleepMilliseconds(200);
+      palClearPad(IOPORT3, 17);
+      chThdSleepMilliseconds(200);
+      palClearPad(IOPORT3, 17);
         do
         {
             dwStatus = efc->EEFC_FSR ;

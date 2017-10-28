@@ -25,6 +25,7 @@
 #include <math.h>
 #include <string.h>
 #include <mcuconf.h>
+#include "chprintf.h"
 
 #include "./i2c.h"
 #include "./sensors_data.h"
@@ -197,24 +198,98 @@ static msg_t IMUThread(void *arg) {
  * Application entry point.
  */
 int main(void) {
+  
   halInit();
 
   chSysInit();
 
-  /* Configure EBI I/O for psram connection*/
-  PIO_Configure(pinPsram, PIO_LISTSIZE(pinPsram));
 
-  /* complete SMC configuration between PSRAM and SMC waveforms.*/
-  BOARD_ConfigurePSRAM(SMC);
+  sdStart(&SD1, NULL);  /* Activates the serial driver 1 */
+  chprintf((BaseChannel *)&SD1, "Init Debug\n\r");
 
-  i2c.Init();
-  /* Creates the imu thread. */
-  chThdCreateStatic(waIMUThread, sizeof(waIMUThread), NORMALPRIO, IMUThread,
-                    NULL);
 
-  /* Creates the hum thread. */
-  chThdCreateStatic(waEnvThread, sizeof(waEnvThread), NORMALPRIO, EnvThread,
-                    NULL);
+  chprintf((BaseChannel *)&SD1, "FSR: %x \n\r", EFC->EEFC_FSR);
+
+  //FLASHD_Initialize(BOARD_MCK,1);
+
+  chprintf((BaseChannel *)&SD1, "FSR: %x \n\r", EFC->EEFC_FSR);
+  uint32_t i;
+    uint8_t error;
+    uint32_t pBuffer[IFLASH_PAGE_SIZE / 4];
+    uint32_t lastPageAddress;
+    volatile uint32_t *pLastPageData;
+
+  palSetPad(IOPORT3, 17);
+      chThdSleepMilliseconds(200);
+      palClearPad(IOPORT3, 17);
+      chThdSleepMilliseconds(200);
+      palClearPad(IOPORT3, 17);
+
+    /* Performs tests on last page (to avoid overriding existing program).*/
+    lastPageAddress = IFLASH_ADDR + 256*IFLASH_PAGE_SIZE;
+    pLastPageData = (volatile uint32_t *) lastPageAddress;
+
+    /* Unlock page */
+    chprintf((BaseChannel *)&SD1,"-I- Unlocking last page\n\r");
+    error = FLASHD_Unlock(lastPageAddress, lastPageAddress + IFLASH_PAGE_SIZE, 0, 0);
+
+    // chprintf((BaseChannel *)&SD1,"-I- Unlocking last page\n\r");
+    // error = FLASHD_Lock(lastPageAddress, lastPageAddress + IFLASH_PAGE_SIZE, 0, 0);
+
+    // /* Unlock page */
+    // chprintf((BaseChannel *)&SD1,"-I- Unlocking last page\n\r");
+    // error = FLASHD_Unlock(lastPageAddress, lastPageAddress + IFLASH_PAGE_SIZE, 0, 0);
+
+    // chprintf((BaseChannel *)&SD1,"-I- Unlocking last page\n\r");
+    // error = FLASHD_Lock(lastPageAddress, lastPageAddress + IFLASH_PAGE_SIZE, 0, 0);
+   
+
+    /* Write page with walking bit pattern (0x00000001, 0x00000002, ...) */
+    chprintf((BaseChannel *)&SD1,"-I- Writing last page with walking bit pattern\n\r");
+    for ( i=0 ; i < (IFLASH_PAGE_SIZE / 4); i++ )
+    {
+        pBuffer[i] = i*i;
+    }
+    //error = FLASHD_Write(lastPageAddress, pBuffer, IFLASH_PAGE_SIZE);
+
+    /* Check page contents */
+    chprintf((BaseChannel *)&SD1, "-I- Checking page contents " ) ;
+    for (i=0; i < (IFLASH_PAGE_SIZE / 4); i++)
+    {
+        chprintf((BaseChannel *)&SD1,"ok : %d \n\r",pLastPageData[i]) ;
+    }
+    chprintf((BaseChannel *)&SD1," ok \n\r") ;
+
+    /* Lock page */
+    chprintf((BaseChannel *)&SD1, "-I- Locking last page\n\r" ) ;
+   // error = FLASHD_Lock( lastPageAddress, lastPageAddress + IFLASH_PAGE_SIZE, 0, 0 ) ;
+
+    /* Check that associated region is locked*/
+    chprintf((BaseChannel *)&SD1, "-I- Try to program the locked page... \n\r" ) ;
+    error = FLASHD_Write( lastPageAddress, pBuffer, IFLASH_PAGE_SIZE ) ;
+    if ( error )
+    {
+        chprintf((BaseChannel *)&SD1, "-I- The page to be programmed belongs to a locked region.\n\r" ) ;
+    }
+
+    chprintf((BaseChannel *)&SD1, "-I- Please open Segger's JMem program \n\r" ) ;
+    chprintf((BaseChannel *)&SD1, "-I- Read memory at address 0x%08x to check contents\n\r",(unsigned int)lastPageAddress ) ;
+    chprintf((BaseChannel *)&SD1, "-I- Press any key to continue...\n\r" ) ;
+
+  // /* Configure EBI I/O for psram connection*/
+  // PIO_Configure(pinPsram, PIO_LISTSIZE(pinPsram));
+
+  // /* complete SMC configuration between PSRAM and SMC waveforms.*/
+  // BOARD_ConfigurePSRAM(SMC);
+
+  // i2c.Init();
+  // /* Creates the imu thread. */
+  // chThdCreateStatic(waIMUThread, sizeof(waIMUThread), NORMALPRIO, IMUThread,
+  //                   NULL);
+
+  // /* Creates the hum thread. */
+  // chThdCreateStatic(waEnvThread, sizeof(waEnvThread), NORMALPRIO, EnvThread,
+  //                   NULL);
 
   return (0);
 }
