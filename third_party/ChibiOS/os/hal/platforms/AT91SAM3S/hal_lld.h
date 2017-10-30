@@ -60,7 +60,8 @@
 #define ADC_IRQHandler           VectorB4    /**< ADC                        */
 #define USART0_IRQHandler        Vector78    /**< USART0                     */
 #define TWI0_IRQHandler          Vector8C    /**< TWI0                       */
-#define EFC_IRQHandler          Vector5
+#define EFC_IRQHandler           Vector58    /**< EEFC                       */
+#define WDT_IRQHandler           Vector50    /**< WDT                        */
 //TODO: Add USART interrupt               
 
 /*===========================================================================*/               
