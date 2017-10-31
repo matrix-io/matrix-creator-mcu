@@ -270,62 +270,8 @@ extern uint32_t EFC_PerformCommand( Efc* efc, uint32_t dwCommand, uint32_t dwArg
     {
         uint32_t dwStatus ;
 
-
-
-      chprintf((BaseChannel *)&SD1, "Argument: %x \n\r", dwArgument);
-
-      chprintf((BaseChannel *)&SD1, "Command: %x \n\r", dwCommand);
-
-          palSetPad(IOPORT3, 17);
-      chThdSleepMilliseconds(200);
-      palClearPad(IOPORT3, 17);
-      chThdSleepMilliseconds(200);
-      palClearPad(IOPORT3, 17);
-
-          palSetPad(IOPORT3, 17);
-      chThdSleepMilliseconds(200);
-      palClearPad(IOPORT3, 17);
-      chThdSleepMilliseconds(200);
-      palClearPad(IOPORT3, 17);
-          palSetPad(IOPORT3, 17);
-      chThdSleepMilliseconds(200);
-      palClearPad(IOPORT3, 17);
-      chThdSleepMilliseconds(200);
-      palClearPad(IOPORT3, 17);
-
-          palSetPad(IOPORT3, 17);
-      chThdSleepMilliseconds(200);
-      palClearPad(IOPORT3, 17);
-      chThdSleepMilliseconds(200);
-      palClearPad(IOPORT3, 17);
-          palSetPad(IOPORT3, 17);
-      chThdSleepMilliseconds(200);
-      palClearPad(IOPORT3, 17);
-      chThdSleepMilliseconds(200);
-      palClearPad(IOPORT3, 17);
-          palSetPad(IOPORT3, 17);
-      chThdSleepMilliseconds(200);
-      palClearPad(IOPORT3, 17);
-      chThdSleepMilliseconds(200);
-      palClearPad(IOPORT3, 17);
-          palSetPad(IOPORT3, 17);
-      chThdSleepMilliseconds(200);
-      palClearPad(IOPORT3, 17);
-      chThdSleepMilliseconds(200);
-      palClearPad(IOPORT3, 17);
-
-
-
-
-
-
         efc->EEFC_FCR = EEFC_FCR_FKEY(0x5A) | EEFC_FCR_FARG(dwArgument) | EEFC_FCR_FCMD(dwCommand) ;
        
-          palSetPad(IOPORT3, 17);
-      chThdSleepMilliseconds(200);
-      palClearPad(IOPORT3, 17);
-      chThdSleepMilliseconds(200);
-      palClearPad(IOPORT3, 17);
         do
         {
             dwStatus = efc->EEFC_FSR ;

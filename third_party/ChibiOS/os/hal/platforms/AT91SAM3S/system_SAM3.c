@@ -183,7 +183,7 @@
 #define PMC_PCK0_Val    0x00000000      // 0x00000000
 #define PMC_PCK1_Val    0x00000000      // 0x00000000
 #define PMC_PCK2_Val    0x00000000      // 0x00000000
-#define WDT_PERIOD      3000
+#define WDT_PERIOD      300
 
 
 /*--------------------- Watchdog Configuration -------------------------------

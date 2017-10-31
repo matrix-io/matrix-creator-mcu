@@ -32,7 +32,10 @@
 #include "./lsm9ds1.h"
 #include "./hts221.h"
 #include "./veml6070.h"
+#include "flashd.h"
+#include "wdt.h"
 #include "chprintf.h"
+
 
 extern "C" {
 #include "atmel_psram.h"
@@ -81,9 +84,7 @@ static msg_t EnvThread(void *arg) {
   mcu_info.version = kFirmwareVersion;
 
   while (true) {
-    palSetPad(IOPORT3, 17);
-    chThdSleepMilliseconds(200);
-    palClearPad(IOPORT3, 17);
+    chThdSleepMilliseconds(15);
 
     hts221.GetData(hum.humidity, hum.temperature);
 
@@ -97,6 +98,7 @@ static msg_t EnvThread(void *arg) {
     psram_copy(mem_offset_press, (char *)&press, sizeof(press));
     psram_copy(mem_offset_humidity, (char *)&hum, sizeof(hum));
     psram_copy(mem_offset_uv, (char *)&uv, sizeof(uv));
+
   }
   return (0);
 }
@@ -108,25 +110,66 @@ static msg_t IMUThread(void *arg) {
   LSM9DS1 imu(&i2c, IMU_MODE_I2C, 0x6A, 0x1C);
   imu.begin();
   IMUData data;
+  IMUCalibrationData calibData;
+
+  float magOffsetBuffer[3];
+  uint32_t lastPageAddress;
+  volatile float *pLastPageData;
+    
+  lastPageAddress = IFLASH_ADDR + IFLASH_SIZE - IFLASH_PAGE_SIZE;
+  pLastPageData = (volatile float*) lastPageAddress;
+
 
   while (true) {
+
+    palSetPad(IOPORT3, 17);
+    chThdSleepMilliseconds(5);
+    palClearPad(IOPORT3, 17);
+
     
+    FLASHD_Lock(lastPageAddress, lastPageAddress + IFLASH_PAGE_SIZE, 0, 0);
+
+    WDT_Restart( WDT );
+
     // Getting all the data first, to avoid overwriting the offset values
     psram_read(mem_offset_imu, (char *)&data, sizeof(data));
+    psram_read(mem_offset_calib, (char *)&calibData, sizeof(calibData));
+
+    chprintf((BaseChannel *)&SD1, "x data : %d \n\r", (int)calibData.mag_offset_x);
+    chprintf((BaseChannel *)&SD1, "x data : %x \n\r", (int)calibData.mag_offset_wr_flag);
+
 
     // Checking if there is a new calibration ready
-    if (data.mag_offset_wr_flag == OFFSET_WRITE_ENABLE) {
+    if (calibData.mag_offset_wr_flag == OFFSET_WRITE_ENABLE) {
       // resetting write enable flag
-      data.mag_offset_wr_flag = OFFSET_READ_ENABLE;
-      // Copy offsets in the imu sensor
-      imu.setMagOffsetX(data.mag_offset_x);
-      imu.setMagOffsetY(data.mag_offset_y);
-      imu.setMagOffsetZ(data.mag_offset_z);
-    } else {
-      data.mag_offset_x = imu.calcMag(imu.getOffset(X_AXIS));
-      data.mag_offset_y = imu.calcMag(imu.getOffset(Y_AXIS));
-      data.mag_offset_z = imu.calcMag(imu.getOffset(Z_AXIS));
+      calibData.mag_offset_wr_flag = OFFSET_READ_ENABLE;
+
+      FLASHD_Unlock(lastPageAddress, lastPageAddress + IFLASH_PAGE_SIZE, 0, 0);
+
+      magOffsetBuffer[0] = calibData.mag_offset_x;
+      magOffsetBuffer[1] = calibData.mag_offset_y;
+      magOffsetBuffer[2] = calibData.mag_offset_z;
+
+      palSetPad(IOPORT3, 17);
+      chThdSleepMilliseconds(50);
+      palClearPad(IOPORT3, 17);
+      chThdSleepMilliseconds(50);
+      palSetPad(IOPORT3, 17);
+
+      FLASHD_Write(lastPageAddress, (void*)magOffsetBuffer, sizeof(magOffsetBuffer));
+
     }
+
+    //imu.setMagOffsetX(pLastPageData[0]);
+    //imu.setMagOffsetY(pLastPageData[1]);
+    //imu.setMagOffsetZ(pLastPageData[2]);
+
+    chprintf((BaseChannel *)&SD1, "Read From Flash: %d \n\r", (int)pLastPageData[0]);
+
+
+    calibData.mag_offset_x = pLastPageData[0];
+    calibData.mag_offset_y = pLastPageData[1];
+    calibData.mag_offset_z = pLastPageData[2];
 
     // Getting new samples from gyro/mag/accel sensors
     imu.readGyro();
@@ -152,6 +195,7 @@ static msg_t IMUThread(void *arg) {
 
     // Saving data to FPGA
     psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
+    psram_copy(mem_offset_calib, (char *)&calibData, sizeof(calibData));
 
     chThdSleepMilliseconds(20);
   }
@@ -166,7 +210,7 @@ int main(void) {
 
   chSysInit();
 
-  sdStart(&SD1, NULL);  /* Activates the serial driver 1 */
+   sdStart(&SD1, NULL);  /* Activates the serial driver 1 */
   chprintf((BaseChannel *)&SD1, "Init Debug\n\r");
 
   /* Configure EBI I/O for psram connection*/
@@ -180,9 +224,9 @@ int main(void) {
   chThdCreateStatic(waIMUThread, sizeof(waIMUThread), NORMALPRIO, IMUThread,
                     NULL);
 
-  /* Creates the hum thread. */
-  chThdCreateStatic(waEnvThread, sizeof(waEnvThread), NORMALPRIO, EnvThread,
-                    NULL);
+  // /* Creates the hum thread. */
+  // chThdCreateStatic(waEnvThread, sizeof(waEnvThread), NORMALPRIO, EnvThread,
+  //                   NULL);
 
   return (0);
 }

@@ -12,6 +12,7 @@ const int16_t mem_offset_uv = 0x0;
 const int16_t mem_offset_press = 0x10;
 const int16_t mem_offset_humidity = 0x20;
 const int16_t mem_offset_imu = 0x30;
+const int16_t mem_offset_calib = 0x50;
 const int16_t mem_offset_mcu = 0x90;
 
 const int32_t OFFSET_WRITE_ENABLE = 0x25352535;
@@ -45,6 +46,10 @@ struct IMUData {
   float mag_x;
   float mag_y;
   float mag_z;
+};
+
+class IMUCalibrationData {
+public:
   float mag_offset_x;
   float mag_offset_y;
   float mag_offset_z;
