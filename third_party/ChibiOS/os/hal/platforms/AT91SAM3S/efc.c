@@ -82,6 +82,14 @@
  *        Exported functions
  *----------------------------------------------------------------------------*/
 
+CH_IRQ_HANDLER(EFC_IRQHandler) {
+
+  CH_IRQ_PROLOGUE();
+
+  CH_IRQ_EPILOGUE();
+}
+
+
 /**
  * \brief Enables the flash ready interrupt source on the EEFC peripheral.
  *

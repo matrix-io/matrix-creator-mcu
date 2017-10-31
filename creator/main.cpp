@@ -18,24 +18,22 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "board.h"
 #include "ch.h"
 #include "hal.h"
-#include "board.h"
 
 #include <math.h>
-#include <string.h>
 #include <mcuconf.h>
+#include <string.h>
 
-#include "./i2c.h"
-#include "./sensors_data.h"
-#include "./mpl3115a2.h"
-#include "./lsm9ds1.h"
 #include "./hts221.h"
+#include "./i2c.h"
+#include "./lsm9ds1.h"
+#include "./mpl3115a2.h"
+#include "./sensors_data.h"
 #include "./veml6070.h"
 #include "flashd.h"
 #include "wdt.h"
-#include "chprintf.h"
-
 
 extern "C" {
 #include "atmel_psram.h"
@@ -84,7 +82,10 @@ static msg_t EnvThread(void *arg) {
   mcu_info.version = kFirmwareVersion;
 
   while (true) {
-    chThdSleepMilliseconds(15);
+    chThdSleepMilliseconds(40);
+    palSetPad(IOPORT3, 17);
+    chThdSleepMilliseconds(10);
+    palClearPad(IOPORT3, 17);
 
     hts221.GetData(hum.humidity, hum.temperature);
 
@@ -98,7 +99,6 @@ static msg_t EnvThread(void *arg) {
     psram_copy(mem_offset_press, (char *)&press, sizeof(press));
     psram_copy(mem_offset_humidity, (char *)&hum, sizeof(hum));
     psram_copy(mem_offset_uv, (char *)&uv, sizeof(uv));
-
   }
   return (0);
 }
@@ -111,38 +111,26 @@ static msg_t IMUThread(void *arg) {
   imu.begin();
   IMUData data;
   IMUCalibrationData calibData;
+  IMUControl imu_control;
 
-  float magOffsetBuffer[3];
-  uint32_t lastPageAddress;
-  volatile float *pLastPageData;
-    
+  int32_t magOffsetBuffer[3];
+  int32_t lastPageAddress;
+  volatile int32_t *pLastPageData;
+
   lastPageAddress = IFLASH_ADDR + IFLASH_SIZE - IFLASH_PAGE_SIZE;
-  pLastPageData = (volatile float*) lastPageAddress;
-
+  pLastPageData = (volatile int32_t *)lastPageAddress;
 
   while (true) {
-
-    palSetPad(IOPORT3, 17);
-    chThdSleepMilliseconds(5);
-    palClearPad(IOPORT3, 17);
-
     
-    FLASHD_Lock(lastPageAddress, lastPageAddress + IFLASH_PAGE_SIZE, 0, 0);
-
-    WDT_Restart( WDT );
-
     // Getting all the data first, to avoid overwriting the offset values
-    psram_read(mem_offset_imu, (char *)&data, sizeof(data));
-    psram_read(mem_offset_calib, (char *)&calibData, sizeof(calibData));
-
-    chprintf((BaseChannel *)&SD1, "x data : %d \n\r", (int)calibData.mag_offset_x);
-    chprintf((BaseChannel *)&SD1, "x data : %x \n\r", (int)calibData.mag_offset_wr_flag);
-
+    psram_read(mem_offset_control, (char *)&imu_control, sizeof(imu_control));
 
     // Checking if there is a new calibration ready
-    if (calibData.mag_offset_wr_flag == OFFSET_WRITE_ENABLE) {
+    if (imu_control.mag_offset_wr_flag == OFFSET_WRITE_ENABLE) {
       // resetting write enable flag
-      calibData.mag_offset_wr_flag = OFFSET_READ_ENABLE;
+      imu_control.mag_offset_wr_flag = OFFSET_READ_ENABLE;
+
+      psram_read(mem_offset_calib, (char *)&calibData, sizeof(calibData));
 
       FLASHD_Unlock(lastPageAddress, lastPageAddress + IFLASH_PAGE_SIZE, 0, 0);
 
@@ -150,22 +138,17 @@ static msg_t IMUThread(void *arg) {
       magOffsetBuffer[1] = calibData.mag_offset_y;
       magOffsetBuffer[2] = calibData.mag_offset_z;
 
-      palSetPad(IOPORT3, 17);
-      chThdSleepMilliseconds(50);
-      palClearPad(IOPORT3, 17);
-      chThdSleepMilliseconds(50);
-      palSetPad(IOPORT3, 17);
+      psram_copy(mem_offset_control, (char *)&imu_control, sizeof(imu_control));
 
-      FLASHD_Write(lastPageAddress, (void*)magOffsetBuffer, sizeof(magOffsetBuffer));
-
+      FLASHD_Write(lastPageAddress, (void *)magOffsetBuffer,
+                   sizeof(magOffsetBuffer));
     }
 
-    //imu.setMagOffsetX(pLastPageData[0]);
-    //imu.setMagOffsetY(pLastPageData[1]);
-    //imu.setMagOffsetZ(pLastPageData[2]);
+    FLASHD_Lock(lastPageAddress, lastPageAddress + IFLASH_PAGE_SIZE, 0, 0);
 
-    chprintf((BaseChannel *)&SD1, "Read From Flash: %d \n\r", (int)pLastPageData[0]);
-
+    imu.setMagOffsetX((float)(pLastPageData[0] / 1000));
+    imu.setMagOffsetY((float)(pLastPageData[1] / 1000));
+    imu.setMagOffsetZ((float)(pLastPageData[2] / 1000));
 
     calibData.mag_offset_x = pLastPageData[0];
     calibData.mag_offset_y = pLastPageData[1];
@@ -197,6 +180,8 @@ static msg_t IMUThread(void *arg) {
     psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
     psram_copy(mem_offset_calib, (char *)&calibData, sizeof(calibData));
 
+    WDT_Restart(WDT);
+
     chThdSleepMilliseconds(20);
   }
   return (0);
@@ -210,9 +195,6 @@ int main(void) {
 
   chSysInit();
 
-   sdStart(&SD1, NULL);  /* Activates the serial driver 1 */
-  chprintf((BaseChannel *)&SD1, "Init Debug\n\r");
-
   /* Configure EBI I/O for psram connection*/
   PIO_Configure(pinPsram, PIO_LISTSIZE(pinPsram));
 
@@ -224,9 +206,9 @@ int main(void) {
   chThdCreateStatic(waIMUThread, sizeof(waIMUThread), NORMALPRIO, IMUThread,
                     NULL);
 
-  // /* Creates the hum thread. */
-  // chThdCreateStatic(waEnvThread, sizeof(waEnvThread), NORMALPRIO, EnvThread,
-  //                   NULL);
+  /* Creates the hum thread. */
+  chThdCreateStatic(waEnvThread, sizeof(waEnvThread), NORMALPRIO, EnvThread,
+                    NULL);
 
   return (0);
 }

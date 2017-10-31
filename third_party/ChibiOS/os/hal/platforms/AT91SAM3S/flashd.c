@@ -83,13 +83,6 @@
 #include <string.h>
 #include <assert.h>
 
-CH_IRQ_HANDLER(EFC_IRQHandler) {
-
-  CH_IRQ_PROLOGUE();
-
-  CH_IRQ_EPILOGUE();
-}
-
 /*----------------------------------------------------------------------------
  *        Local variables
  *----------------------------------------------------------------------------*/

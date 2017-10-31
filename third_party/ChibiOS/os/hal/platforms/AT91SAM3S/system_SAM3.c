@@ -183,7 +183,7 @@
 #define PMC_PCK0_Val    0x00000000      // 0x00000000
 #define PMC_PCK1_Val    0x00000000      // 0x00000000
 #define PMC_PCK2_Val    0x00000000      // 0x00000000
-#define WDT_PERIOD      300
+#define WDT_PERIOD      3
 
 
 /*--------------------- Watchdog Configuration -------------------------------
@@ -490,8 +490,8 @@ void SystemInit (void)
 
 #if (WDT_SETUP == 0)                    /* Watchdog Setup                     */
   uint32_t  dwPeriod;
-  dwPeriod = (WDT_PERIOD << 8) / 1000 ;
-  WDT->WDT_MR = (WDT_MR_WDRSTEN | WDT_MR_WDDBGHLT | WDT_MR_WDIDLEHLT | (dwPeriod << 16) | dwPeriod) ; 
+  dwPeriod = (WDT_PERIOD) ;
+  WDT->WDT_MR = (WDT_MR_WDRSTEN | WDT_MR_WDDBGHLT | WDT_MR_WDIDLEHLT | dwPeriod) ; 
 #endif
 
 #if defined(SAM3U_PLATFORM)
