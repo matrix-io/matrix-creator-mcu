@@ -49,13 +49,11 @@ struct IMUData {
   float mag_z;
 };
 
-class IMUControl{
-public:
+struct IMUControl {
   int32_t mag_offset_wr_flag;
 };
 
-class IMUCalibrationData {
-public:
+struct IMUCalibrationData {
   int32_t mag_offset_x;
   int32_t mag_offset_y;
   int32_t mag_offset_z;
