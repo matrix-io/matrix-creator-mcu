@@ -14,8 +14,11 @@ const int16_t mem_offset_humidity = 0x20;
 const int16_t mem_offset_imu = 0x30;
 const int16_t mem_offset_mcu = 0x90;
 
+const int32_t OFFSET_WRITE_ENABLE = 0x25352535;
+const int32_t OFFSET_READ_ENABLE = 0x25352534;
+
 struct UVData {
-  float UV;
+  int UV;
 };
 
 struct PressureData {
@@ -42,6 +45,10 @@ struct IMUData {
   float mag_x;
   float mag_y;
   float mag_z;
+  float mag_offset_x;
+  float mag_offset_y;
+  float mag_offset_z;
+  int32_t mag_offset_wr_flag;
 };
 
 struct MCUData {

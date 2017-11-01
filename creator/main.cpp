@@ -33,12 +33,17 @@
 #include "./hts221.h"
 #include "./veml6070.h"
 
+#include "efc.h"
+#include "flashd.h"
+
 extern "C" {
 #include "atmel_psram.h"
 }
 
+#define BOARD_MCK 64000000
+
 const uint32_t kFirmwareCreatorID = 0x10;
-const uint32_t kFirmwareVersion = 0x161026; /* 0xYYMMDD */
+const uint32_t kFirmwareVersion = 0x171017; /* 0xYYMMDD */
 
 /* Global objects */
 creator::I2C i2c;  // TODO(andres.calderon@admobilize.com): avoid global objects
@@ -48,6 +53,14 @@ void psram_copy(uint8_t mem_offset, char *data, uint8_t len) {
 
   for (int i = 0; i < len; i++) {
     psram[mem_offset + i] = data[i];
+  }
+}
+
+void psram_read(uint8_t mem_offset, char *data, uint8_t len) {
+  register char *psram = (char *)PSRAM_BASE_ADDRESS;
+
+  for (int i = 0; i < len; i++) {
+    data[i] = psram[mem_offset + i];
   }
 }
 
@@ -95,13 +108,62 @@ static msg_t EnvThread(void *arg) {
 static WORKING_AREA(waIMUThread, 512);
 static msg_t IMUThread(void *arg) {
   (void)arg;
+
   LSM9DS1 imu(&i2c, IMU_MODE_I2C, 0x6A, 0x1C);
-
   imu.begin();
-
   IMUData data;
 
+  uint32_t i;
+  uint8_t error;
+  uint32_t pBuffer[IFLASH_PAGE_SIZE / 4];
+  uint32_t lastPageAddress;
+  volatile uint32_t *pLastPageData;
+    
+  lastPageAddress = IFLASH_ADDR + IFLASH_SIZE - IFLASH_PAGE_SIZE;
+  pLastPageData = (volatile uint32_t *) lastPageAddress;
+
+
+
   while (true) {
+
+      error =
+      FLASHD_Unlock(lastPageAddress, lastPageAddress + IFLASH_PAGE_SIZE, 0, 0);
+
+  for (i = 0; i < (IFLASH_PAGE_SIZE / 4); i++) {
+    pBuffer[i] = 1 << (i % 32);
+  }
+  error = FLASHD_Write(lastPageAddress, pBuffer, IFLASH_PAGE_SIZE);
+
+  for (i = 0; i < (IFLASH_PAGE_SIZE / 4); i++) {
+    if (pLastPageData[i] == (uint32_t)(1 << (i % 32))) {
+      palSetPad(IOPORT3, 17);
+      chThdSleepMilliseconds(20);
+      palClearPad(IOPORT3, 17);
+      chThdSleepMilliseconds(20);
+      palClearPad(IOPORT3, 17);
+      };
+  }
+
+  error = FLASHD_Lock( lastPageAddress, lastPageAddress + IFLASH_PAGE_SIZE, 0, 0 ) ;
+    
+    // Getting all the data first, to avoid overwriting the offset values
+    psram_read(mem_offset_imu, (char *)&data, sizeof(data));
+
+    // Checking if there is a new calibration ready
+    if (data.mag_offset_wr_flag == OFFSET_WRITE_ENABLE) {
+      // resetting write enable flag
+      data.mag_offset_wr_flag = OFFSET_READ_ENABLE;
+      // Copy offsets in the imu sensor
+      imu.setMagOffsetX(data.mag_offset_x);
+      imu.setMagOffsetY(data.mag_offset_y);
+      //imu.setMagOffsetZ(data.mag_offset_z);
+    } else {
+      data.mag_offset_x = imu.calcMag(imu.getOffset(X_AXIS));
+      data.mag_offset_y = imu.calcMag(imu.getOffset(Y_AXIS));
+      data.mag_offset_z = imu.calcMag(imu.getOffset(Z_AXIS));
+    }
+
+    // Getting new samples from gyro/mag/accel sensors
     imu.readGyro();
     data.gyro_x = imu.calcGyro(imu.gx);
     data.gyro_y = imu.calcGyro(imu.gy);
@@ -123,6 +185,7 @@ static msg_t IMUThread(void *arg) {
                                            data.accel_z * data.accel_z)) *
                  180.0 / M_PI;
 
+    // Saving data to FPGA
     psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
 
     chThdSleepMilliseconds(20);

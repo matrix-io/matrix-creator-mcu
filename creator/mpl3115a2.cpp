@@ -30,6 +30,7 @@ const uint8_t MPL3115A2_REGISTER_STATUS = 0x00;
 const uint8_t MPL3115A2_WHOAMI = 0x0C;
 const uint8_t MPL3115A2_REGISTER_PRESSURE_MSB = 0x01;
 const uint8_t MPL3115A2_REGISTER_TEMP_MSB = 0x04;
+const int MPL3115A2_RETRIES = 10;
 
 MPL3115A2::MPL3115A2(I2C* i2c, uint8_t address) : i2c_(i2c), address_(address) {
   CTRL_REG1_.data = 0;
@@ -60,6 +61,7 @@ bool MPL3115A2::Begin() {
 /* Gets pressure level in kPa */
 float MPL3115A2::GetPressure() {
   uint32_t pressure;
+  int count = 0;
 
   CTRL_REG1_.data = Read(MPL3115A2_CTRL_REG1);
   CTRL_REG1_.fields.OST = 0;
@@ -74,7 +76,9 @@ float MPL3115A2::GetPressure() {
   while (true) {
     DR_STATUS_.data = Read(MPL3115A2_REGISTER_STATUS);
     if (DR_STATUS_.fields.PDR) break;
-    chThdSleepMilliseconds(100);
+    if (count == MPL3115A2_RETRIES) break;
+    chThdSleepMilliseconds(50);
+    count++;
   }
   uint8_t data[3];
   i2c_->ReadBytes(address_, MPL3115A2_REGISTER_PRESSURE_MSB, (uint8_t*)data,
@@ -87,6 +91,7 @@ float MPL3115A2::GetPressure() {
 
 float MPL3115A2::GetAltitude() {
   int32_t altitude;
+  int count = 0;
 
   CTRL_REG1_.data = Read(MPL3115A2_CTRL_REG1);
   CTRL_REG1_.fields.OST = 0;
@@ -101,7 +106,9 @@ float MPL3115A2::GetAltitude() {
   while (true) {
     DR_STATUS_.data = Read(MPL3115A2_REGISTER_STATUS);
     if (DR_STATUS_.fields.PDR) break;
-    chThdSleepMilliseconds(100);
+    if (count == MPL3115A2_RETRIES) break;
+    chThdSleepMilliseconds(50);
+    count++;
   }
   uint8_t data[3];
   i2c_->ReadBytes(address_, MPL3115A2_REGISTER_PRESSURE_MSB, (uint8_t*)data,
@@ -114,6 +121,8 @@ float MPL3115A2::GetAltitude() {
 
 /* Gets the temperature in °C */
 float MPL3115A2::GetTemperature() {
+  int count=0;
+
   CTRL_REG1_.data = Read(MPL3115A2_CTRL_REG1);
   CTRL_REG1_.fields.OST = 0;
   Write(MPL3115A2_CTRL_REG1, CTRL_REG1_.data);
@@ -126,7 +135,9 @@ float MPL3115A2::GetTemperature() {
   while (true) {
     DR_STATUS_.data = Read(MPL3115A2_REGISTER_STATUS);
     if (DR_STATUS_.fields.TDR) break;
-    chThdSleepMilliseconds(100);
+    if (count == MPL3115A2_RETRIES) break;
+    chThdSleepMilliseconds(50);
+    count++;
   }
   uint8_t data[2];
   i2c_->ReadBytes(address_, MPL3115A2_REGISTER_TEMP_MSB, (uint8_t*)data,

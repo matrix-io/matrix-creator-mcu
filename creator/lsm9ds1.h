@@ -76,7 +76,14 @@ class LSM9DS1 {
 
   void calibrate(bool autoCalc = true);
   void calibrateMag(bool loadIn = true);
-  void magOffset(uint8_t axis, int16_t offset);
+  void setMagOffsetX(float offset);
+  void setMagOffsetY(float offset);
+  void setMagOffsetZ(float offset);
+  void setMagOffsetX(int16_t offset);
+  void setMagOffsetY(int16_t offset);
+  void setMagOffsetZ(int16_t offset);
+  void magSetOffset(uint8_t axis, int16_t offset);
+  uint16_t getOffset(uint8_t axis);
 
   // accelAvailable() -- Polls the accelerometer status register to check
   // if new data is available.
