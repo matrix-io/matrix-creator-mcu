@@ -110,15 +110,15 @@ static msg_t IMUThread(void *arg) {
   LSM9DS1 imu(&i2c, IMU_MODE_I2C, 0x6A, 0x1C);
   imu.begin();
   IMUData data;
-  IMUCalibrationData calibData;
+  IMUCalibrationData calib_data;
   IMUControl imu_control;
 
-  int32_t magOffsetBuffer[3];
-  int32_t lastPageAddress;
-  volatile int32_t *pLastPageData;
+  int32_t mag_offset_buffer[3];
+  int32_t last_page_address;
+  volatile int32_t *p_last_page_data;
 
-  lastPageAddress = IFLASH_ADDR + IFLASH_SIZE - IFLASH_PAGE_SIZE;
-  pLastPageData = (volatile int32_t *)lastPageAddress;
+  last_page_address = IFLASH_ADDR + IFLASH_SIZE - IFLASH_PAGE_SIZE;
+  p_last_page_data = (volatile int32_t *)last_page_address;
 
   while (true) {
     
@@ -127,32 +127,30 @@ static msg_t IMUThread(void *arg) {
 
     // Checking if there is a new calibration ready
     if (imu_control.mag_offset_wr_flag == OFFSET_WRITE_ENABLE) {
+      psram_read(mem_offset_calib, (char *)&calib_data, sizeof(calib_data));
+
+      mag_offset_buffer[0] = calib_data.mag_offset_x;
+      mag_offset_buffer[1] = calib_data.mag_offset_y;
+      mag_offset_buffer[2] = calib_data.mag_offset_z;
+
+      FLASHD_Unlock(last_page_address, last_page_address + IFLASH_PAGE_SIZE, 0,
+                    0);
+      FLASHD_Write(last_page_address, (void *)mag_offset_buffer,
+                   sizeof(mag_offset_buffer));
+      FLASHD_Lock(last_page_address, last_page_address + IFLASH_PAGE_SIZE, 0,
+                  0);
+
       // resetting write enable flag
       imu_control.mag_offset_wr_flag = OFFSET_WRITE_DISABLE;
-
-      psram_read(mem_offset_calib, (char *)&calibData, sizeof(calibData));
-
-      FLASHD_Unlock(lastPageAddress, lastPageAddress + IFLASH_PAGE_SIZE, 0, 0);
-
-      magOffsetBuffer[0] = calibData.mag_offset_x;
-      magOffsetBuffer[1] = calibData.mag_offset_y;
-      magOffsetBuffer[2] = calibData.mag_offset_z;
-
       psram_copy(mem_offset_control, (char *)&imu_control, sizeof(imu_control));
 
-      FLASHD_Write(lastPageAddress, (void *)magOffsetBuffer,
-                   sizeof(magOffsetBuffer));
+    } else if (imu_control.mag_offset_wr_flag == OFFSET_WRITE_DISABLE) {
+      // Get offsets from flash
+      calib_data.mag_offset_x = p_last_page_data[0];
+      calib_data.mag_offset_y = p_last_page_data[1];
+      calib_data.mag_offset_z = p_last_page_data[2];
+      psram_copy(mem_offset_calib, (char *)&calib_data, sizeof(calib_data));
     }
-
-    FLASHD_Lock(lastPageAddress, lastPageAddress + IFLASH_PAGE_SIZE, 0, 0);
-
-    imu.setMagOffsetX((float)(pLastPageData[0] / 1000));
-    imu.setMagOffsetY((float)(pLastPageData[1] / 1000));
-    imu.setMagOffsetZ((float)(pLastPageData[2] / 1000));
-
-    calibData.mag_offset_x = pLastPageData[0];
-    calibData.mag_offset_y = pLastPageData[1];
-    calibData.mag_offset_z = pLastPageData[2];
 
     // Getting new samples from gyro/mag/accel sensors
     imu.readGyro();
@@ -161,9 +159,9 @@ static msg_t IMUThread(void *arg) {
     data.gyro_z = imu.calcGyro(imu.gz);
 
     imu.readMag();
-    data.mag_x = imu.calcMag(imu.mx);
-    data.mag_y = imu.calcMag(imu.my);
-    data.mag_z = imu.calcMag(imu.mz);
+    data.mag_x = imu.calcMag(imu.mx) * 1000.0 - p_last_page_data[0];
+    data.mag_y = imu.calcMag(imu.my) * 1000.0 - p_last_page_data[1];
+    data.mag_z = imu.calcMag(imu.mz) * 1000.0 - p_last_page_data[2];
 
     imu.readAccel();
     data.accel_x = imu.calcAccel(imu.ax);
@@ -178,7 +176,6 @@ static msg_t IMUThread(void *arg) {
 
     // Saving data to FPGA
     psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
-    psram_copy(mem_offset_calib, (char *)&calibData, sizeof(calibData));
 
     WDT_Restart(WDT);
 
