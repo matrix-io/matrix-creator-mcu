@@ -128,7 +128,7 @@ static msg_t IMUThread(void *arg) {
     // Checking if there is a new calibration ready
     if (imu_control.mag_offset_wr_flag == OFFSET_WRITE_ENABLE) {
       // resetting write enable flag
-      imu_control.mag_offset_wr_flag = OFFSET_READ_ENABLE;
+      imu_control.mag_offset_wr_flag = OFFSET_WRITE_DISABLE;
 
       psram_read(mem_offset_calib, (char *)&calibData, sizeof(calibData));
 
