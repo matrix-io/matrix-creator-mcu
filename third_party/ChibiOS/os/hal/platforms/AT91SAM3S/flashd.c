@@ -186,7 +186,6 @@ extern uint32_t FLASHD_Erase( uint32_t dwAddress )
     uint16_t wOffset ;
     uint32_t dwError ;
 
-    assert( (dwAddress >=IFLASH_ADDR) || (dwAddress <= (IFLASH_ADDR + IFLASH_SIZE)) ) ;
 
     // Translate write address
     EFC_TranslateAddress( &pEfc, dwAddress, &wPage, &wOffset ) ;
@@ -218,9 +217,6 @@ extern uint32_t FLASHD_Write( uint32_t dwAddress, const void *pvBuffer, uint32_t
     uint32_t *pAlignedDestination ;
     uint32_t *pAlignedSource ;
 
-    assert( pvBuffer ) ;
-    assert( dwAddress >=IFLASH_ADDR ) ;
-    assert( (dwAddress + dwSize) <= (IFLASH_ADDR + IFLASH_SIZE) ) ;
 
     /* Translate write address */
     EFC_TranslateAddress( &pEfc, dwAddress, &page, &offset ) ;
@@ -254,6 +250,8 @@ extern uint32_t FLASHD_Write( uint32_t dwAddress, const void *pvBuffer, uint32_t
             *pAlignedDestination++ = *pAlignedSource++;
             sizeTmp -= 4;
         }
+
+        pEfc->EEFC_FMR |= 6 << 8;
 
         /* Send writing command */
         dwError = EFC_PerformCommand( pEfc, EFC_FCMD_EWP, page, _dwUseIAP ) ;

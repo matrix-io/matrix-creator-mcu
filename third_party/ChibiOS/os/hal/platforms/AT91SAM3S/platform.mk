@@ -11,6 +11,7 @@ PLATFORMSRC = ${CHIBIOS}/os/hal/platforms/AT91SAM3S/hal_lld.c     \
               ${CHIBIOS}/os/hal/platforms/AT91SAM3S/atmel_spi.c   \
               ${CHIBIOS}/os/hal/platforms/AT91SAM3S/atmel_psram.c \
               ${CHIBIOS}/os/hal/platforms/AT91SAM3S/flashd.c      \
+              ${CHIBIOS}/os/hal/platforms/AT91SAM3S/wdt.c         \
               ${CHIBIOS}/os/hal/platforms/AT91SAM3S/efc.c
  
 # Required include directories
