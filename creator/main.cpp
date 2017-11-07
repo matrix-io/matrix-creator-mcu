@@ -138,8 +138,7 @@ static msg_t IMUThread(void *arg) {
       FLASHD_Write(last_page_address, (void *)mag_offset_buffer,
                    sizeof(mag_offset_buffer));
       FLASHD_Lock(last_page_address, last_page_address + IFLASH_PAGE_SIZE, 0,
-                  0);
-
+                  0); 
       // resetting write enable flag
       imu_control.mag_offset_wr_flag = OFFSET_WRITE_DISABLE;
       psram_copy(mem_offset_control, (char *)&imu_control, sizeof(imu_control));
@@ -152,6 +151,8 @@ static msg_t IMUThread(void *arg) {
       psram_copy(mem_offset_calib, (char *)&calib_data, sizeof(calib_data));
     }
 
+    FLASHD_Lock(last_page_address, last_page_address + IFLASH_PAGE_SIZE, 0,
+                  0);
     // Getting new samples from gyro/mag/accel sensors
     imu.readGyro();
     data.gyro_x = imu.calcGyro(imu.gx);
@@ -159,9 +160,9 @@ static msg_t IMUThread(void *arg) {
     data.gyro_z = imu.calcGyro(imu.gz);
 
     imu.readMag();
-    data.mag_x = imu.calcMag(imu.mx) * 1000.0 - p_last_page_data[0];
-    data.mag_y = imu.calcMag(imu.my) * 1000.0 - p_last_page_data[1];
-    data.mag_z = imu.calcMag(imu.mz) * 1000.0 - p_last_page_data[2];
+    data.mag_x = imu.calcMag(imu.mx) * 1000.0 - p_last_page_data[0]/1000;
+    data.mag_y = imu.calcMag(imu.my) * 1000.0 - p_last_page_data[1]/1000;
+    data.mag_z = imu.calcMag(imu.mz) * 1000.0 - p_last_page_data[2]/1000;
 
     imu.readAccel();
     data.accel_x = imu.calcAccel(imu.ax);
