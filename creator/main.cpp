@@ -18,27 +18,29 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "board.h"
 #include "ch.h"
 #include "hal.h"
-#include "board.h"
 
 #include <math.h>
-#include <string.h>
 #include <mcuconf.h>
+#include <string.h>
 
-#include "./i2c.h"
-#include "./sensors_data.h"
-#include "./mpl3115a2.h"
-#include "./lsm9ds1.h"
 #include "./hts221.h"
+#include "./i2c.h"
+#include "./lsm9ds1.h"
+#include "./mpl3115a2.h"
+#include "./sensors_data.h"
 #include "./veml6070.h"
+#include "flashd.h"
+#include "wdt.h"
 
 extern "C" {
 #include "atmel_psram.h"
 }
 
 const uint32_t kFirmwareCreatorID = 0x10;
-const uint32_t kFirmwareVersion = 0x161026; /* 0xYYMMDD */
+const uint32_t kFirmwareVersion = 0x171017; /* 0xYYMMDD */
 
 /* Global objects */
 creator::I2C i2c;  // TODO(andres.calderon@admobilize.com): avoid global objects
@@ -48,6 +50,14 @@ void psram_copy(uint8_t mem_offset, char *data, uint8_t len) {
 
   for (int i = 0; i < len; i++) {
     psram[mem_offset + i] = data[i];
+  }
+}
+
+void psram_read(uint8_t mem_offset, char *data, uint8_t len) {
+  register char *psram = (char *)PSRAM_BASE_ADDRESS;
+
+  for (int i = 0; i < len; i++) {
+    data[i] = psram[mem_offset + i];
   }
 }
 
@@ -72,8 +82,9 @@ static msg_t EnvThread(void *arg) {
   mcu_info.version = kFirmwareVersion;
 
   while (true) {
+    chThdSleepMilliseconds(40);
     palSetPad(IOPORT3, 17);
-    chThdSleepMilliseconds(1);
+    chThdSleepMilliseconds(10);
     palClearPad(IOPORT3, 17);
 
     hts221.GetData(hum.humidity, hum.temperature);
@@ -95,22 +106,63 @@ static msg_t EnvThread(void *arg) {
 static WORKING_AREA(waIMUThread, 512);
 static msg_t IMUThread(void *arg) {
   (void)arg;
+
   LSM9DS1 imu(&i2c, IMU_MODE_I2C, 0x6A, 0x1C);
-
   imu.begin();
-
   IMUData data;
+  IMUCalibrationData calib_data;
+  IMUControl imu_control;
+
+  int32_t mag_offset_buffer[3];
+  int32_t last_page_address;
+  volatile int32_t *p_last_page_data;
+
+  last_page_address = IFLASH_ADDR + IFLASH_SIZE - IFLASH_PAGE_SIZE;
+  p_last_page_data = (volatile int32_t *)last_page_address;
 
   while (true) {
+    
+    // Getting all the data first, to avoid overwriting the offset values
+    psram_read(mem_offset_control, (char *)&imu_control, sizeof(imu_control));
+
+    // Checking if there is a new calibration ready
+    if (imu_control.mag_offset_wr_flag == OFFSET_WRITE_ENABLE) {
+      psram_read(mem_offset_calib, (char *)&calib_data, sizeof(calib_data));
+
+      mag_offset_buffer[0] = calib_data.mag_offset_x;
+      mag_offset_buffer[1] = calib_data.mag_offset_y;
+      mag_offset_buffer[2] = calib_data.mag_offset_z;
+
+      FLASHD_Unlock(last_page_address, last_page_address + IFLASH_PAGE_SIZE, 0,
+                    0);
+      FLASHD_Write(last_page_address, (void *)mag_offset_buffer,
+                   sizeof(mag_offset_buffer));
+      FLASHD_Lock(last_page_address, last_page_address + IFLASH_PAGE_SIZE, 0,
+                  0); 
+      // resetting write enable flag
+      imu_control.mag_offset_wr_flag = OFFSET_WRITE_DISABLE;
+      psram_copy(mem_offset_control, (char *)&imu_control, sizeof(imu_control));
+
+    } else if (imu_control.mag_offset_wr_flag == OFFSET_WRITE_DISABLE) {
+      // Get offsets from flash
+      calib_data.mag_offset_x = p_last_page_data[0];
+      calib_data.mag_offset_y = p_last_page_data[1];
+      calib_data.mag_offset_z = p_last_page_data[2];
+      psram_copy(mem_offset_calib, (char *)&calib_data, sizeof(calib_data));
+    }
+
+    FLASHD_Lock(last_page_address, last_page_address + IFLASH_PAGE_SIZE, 0,
+                  0);
+    // Getting new samples from gyro/mag/accel sensors
     imu.readGyro();
     data.gyro_x = imu.calcGyro(imu.gx);
     data.gyro_y = imu.calcGyro(imu.gy);
     data.gyro_z = imu.calcGyro(imu.gz);
 
     imu.readMag();
-    data.mag_x = imu.calcMag(imu.mx);
-    data.mag_y = imu.calcMag(imu.my);
-    data.mag_z = imu.calcMag(imu.mz);
+    data.mag_x = imu.calcMag(imu.mx) * 1000.0 - p_last_page_data[0]/1000;
+    data.mag_y = imu.calcMag(imu.my) * 1000.0 - p_last_page_data[1]/1000;
+    data.mag_z = imu.calcMag(imu.mz) * 1000.0 - p_last_page_data[2]/1000;
 
     imu.readAccel();
     data.accel_x = imu.calcAccel(imu.ax);
@@ -123,7 +175,10 @@ static msg_t IMUThread(void *arg) {
                                            data.accel_z * data.accel_z)) *
                  180.0 / M_PI;
 
+    // Saving data to FPGA
     psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
+
+    WDT_Restart(WDT);
 
     chThdSleepMilliseconds(20);
   }

@@ -20,12 +20,12 @@ extern void BOARD_ConfigurePSRAM( Smc* pSmc )
     pSmc->SMC_CS_NUMBER[3].SMC_SETUP = SMC_SETUP_NWE_SETUP( 3 )
                                      | SMC_SETUP_NCS_WR_SETUP( 4 )
                                      | SMC_SETUP_NRD_SETUP( 3 )
-                                     | SMC_SETUP_NCS_RD_SETUP( 5 ) ;
+                                     | SMC_SETUP_NCS_RD_SETUP( 4 ) ;
 
     pSmc->SMC_CS_NUMBER[3].SMC_PULSE = SMC_PULSE_NWE_PULSE( 3 )
                                      | SMC_PULSE_NCS_WR_PULSE( 4 )
                                      | SMC_PULSE_NRD_PULSE( 3 )
-                                     | SMC_PULSE_NCS_RD_PULSE( 5 ) ;
+                                     | SMC_PULSE_NCS_RD_PULSE( 4 ) ;
 
     /* NWE_CYCLE:     The total duration of the write cycle.
                       NWE_CYCLE = NWE_SETUP + NWE_PULSE + NWE_HOLD
@@ -35,8 +35,8 @@ extern void BOARD_ConfigurePSRAM( Smc* pSmc )
                       NRD_CYCLE = NRD_SETUP + NRD_PULSE + NRD_HOLD
                       = NCS_RD_SETUP + NCS_RD_PULSE + NCS_RD_HOLD
                       (tRC) Read Cycle Time min. 70ns. */
-    pSmc->SMC_CS_NUMBER[3].SMC_CYCLE = SMC_CYCLE_NWE_CYCLE( 4 )
-                                     | SMC_CYCLE_NRD_CYCLE( 5 ) ;
+    pSmc->SMC_CS_NUMBER[3].SMC_CYCLE = SMC_CYCLE_NWE_CYCLE( 9 )
+                                     | SMC_CYCLE_NRD_CYCLE( 9 ) ;
 
     dwTmp = SMC->SMC_CS_NUMBER[3].SMC_MODE & (uint32_t)(~(SMC_MODE_DBW_Msk)) ;
     pSmc->SMC_CS_NUMBER[3].SMC_MODE  = dwTmp
