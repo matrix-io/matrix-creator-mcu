@@ -48,9 +48,7 @@ const PALConfig pal_default_config =
  */
 void __early_init (void)
 {
-   /* Watchdog disabled.*/
-   WDT->WDT_MR = WDT_MR_WDDIS;;
-  
+   
    at91sam3_clock_init();
 }
 
