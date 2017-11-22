@@ -21,6 +21,8 @@
 #include "ch.h"
 #include "hal.h"
 #include "board.h"
+#include "wdt.h"
+
 
 #include <math.h>
 #include <string.h>
@@ -111,36 +113,6 @@ static msg_t IMUThread(void *arg) {
 
   while (true) {
     
-    // Getting all the data first, to avoid overwriting the offset values
-    psram_read(mem_offset_imu, (char *)&data, sizeof(data));
-
-    // Checking if there is a new offset in the PFGA from HAL
-    if (current_offset_x != data.mag_offset_x ||
-        current_offset_y != data.mag_offset_y ||
-        current_offset_z != data.mag_offset_z) {
-      // Update current offsets
-      current_offset_x = data.mag_offset_x;
-      current_offset_y = data.mag_offset_y;
-      current_offset_z = data.mag_offset_z;
-      // Update offsets in the imu sensor
-      imu.setMagOffsetX(data.mag_offset_x);
-      imu.setMagOffsetY(data.mag_offset_y);
-      // TODO (yoel.castillo): SetMagOffsetZ currently not working
-      // imu.SetMagOffsetZ(data.mag_offset_z);
-
-      // Blinking two times
-      palClearPad(IOPORT3, 17);
-      chThdSleepMilliseconds(50);
-      palSetPad(IOPORT3, 17);
-      chThdSleepMilliseconds(50);
-      palClearPad(IOPORT3, 17);
-      chThdSleepMilliseconds(50);
-      palSetPad(IOPORT3, 17);
-      chThdSleepMilliseconds(50);
-      palClearPad(IOPORT3, 17);
-      chThdSleepMilliseconds(50);
-    }
-
     // Getting new samples from gyro/mag/accel sensors
     imu.readGyro();
     data.gyro_x = imu.calcGyro(imu.gx);
@@ -167,6 +139,8 @@ static msg_t IMUThread(void *arg) {
     psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
 
     chThdSleepMilliseconds(20);
+
+    WDT_Restart( WDT ) ;
   }
   return (0);
 }
