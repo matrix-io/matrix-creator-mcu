@@ -21,6 +21,8 @@
 #include "ch.h"
 #include "hal.h"
 #include "board.h"
+#include "wdt.h"
+
 
 #include <math.h>
 #include <string.h>
@@ -126,6 +128,8 @@ static msg_t IMUThread(void *arg) {
     psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
 
     chThdSleepMilliseconds(20);
+
+    WDT_Restart( WDT ) ;
   }
   return (0);
 }
