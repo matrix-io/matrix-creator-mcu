@@ -488,7 +488,7 @@ void SystemInit (void)
 #endif  
 
 #if (WDT_SETUP == 1)                    /* Watchdog Setup                     */
-  WDT->WDT_MR = WDT_MR_WDDIS;
+  WDT->WDT_MR = WDT_MR_WDRSTEN | WDT_MR_WDDBGHLT | WDT_MR_WDIDLEHLT | 0x0A;
 #endif
 
 #if defined(SAM3U_PLATFORM)
