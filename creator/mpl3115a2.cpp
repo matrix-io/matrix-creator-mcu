@@ -18,10 +18,10 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "./mpl3115a2.h"
+#include "./common_data.h"
 #include "ch.h"
 #include "hal.h"
-#include "./common_data.h"
-#include "./mpl3115a2.h"
 
 namespace creator {
 
@@ -122,7 +122,7 @@ int MPL3115A2::GetAltitude() {
 
 /* Gets the temperature in °C */
 int MPL3115A2::GetTemperature() {
-  int count=0;
+  int count = 0;
 
   CTRL_REG1_.data = Read(MPL3115A2_CTRL_REG1);
   CTRL_REG1_.fields.OST = 0;
@@ -150,4 +150,4 @@ int MPL3115A2::GetTemperature() {
 uint8_t MPL3115A2::Read(uint8_t a) { return i2c_->ReadByte(address_, a); }
 
 void MPL3115A2::Write(uint8_t a, uint8_t d) { i2c_->WriteByte(address_, a, d); }
-};
+};  // namespace creator

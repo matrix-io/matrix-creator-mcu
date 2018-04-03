@@ -8,6 +8,6 @@
 
 #include "chtypes.h"
 
-const int factor_scale= 1000;
+const int factor_scale = 1000;
 
 #endif  // CPP_DRIVER_COMMON_DATA_H_

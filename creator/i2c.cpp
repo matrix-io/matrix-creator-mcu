@@ -18,8 +18,8 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "pio.h"
 #include "atmel_twi.h"
+#include "pio.h"
 
 #include "./i2c.h"
 

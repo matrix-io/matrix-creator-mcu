@@ -21,8 +21,8 @@
 #ifndef CPP_CREATOR_HTS221_H_
 #define CPP_CREATOR_HTS221_H_
 
-#include "chtypes.h"
 #include "atmel_twid.h"
+#include "chtypes.h"
 
 #include "./i2c.h"
 

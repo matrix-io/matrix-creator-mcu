@@ -22,9 +22,9 @@
  https://github.com/ControlEverythingCommunity/HTS221/blob/master/Java/HTS221.java
  */
 
-#include "ch.h"
-#include "./common_data.h"
 #include "./hts221.h"
+#include "./common_data.h"
+#include "ch.h"
 
 namespace creator {
 
@@ -78,7 +78,8 @@ void HTS221::GetData(int& humidity, int& temperature) {
   humidity = ((1.0 * H1) - (1.0 * H0)) * (1.0 * hum - 1.0 * H2) /
                  (1.0 * H3 - 1.0 * H2) +
              (1.0 * H0) * factor_scale;
-  temperature = (((T1 - T0) / 8.0) * (temp - T2)  / (T3 - T2) + (T0 / 8.0)) * factor_scale;
+  temperature =
+      (((T1 - T0) / 8.0) * (temp - T2) / (T3 - T2) + (T0 / 8.0)) * factor_scale;
 }
 
 uint8_t HTS221::Read(uint8_t a) { return i2c_->ReadByte(address_, a); }
@@ -88,4 +89,4 @@ void HTS221::Write(uint8_t a, uint8_t d) { i2c_->WriteByte(address_, a, d); }
 uint8_t HTS221::Read(uint8_t a, uint8_t* data, uint8_t size) {
   return i2c_->ReadBytes(address_, a, data, size);
 }
-};
+};  // namespace creator

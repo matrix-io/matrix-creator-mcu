@@ -18,21 +18,20 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "board.h"
 #include "ch.h"
 #include "hal.h"
-#include "board.h"
 #include "wdt.h"
 
-
 #include <math.h>
-#include <string.h>
 #include <mcuconf.h>
+#include <string.h>
 
-#include "./i2c.h"
-#include "./sensors_data.h"
-#include "./mpl3115a2.h"
-#include "./lsm9ds1.h"
 #include "./hts221.h"
+#include "./i2c.h"
+#include "./lsm9ds1.h"
+#include "./mpl3115a2.h"
+#include "./sensors_data.h"
 #include "./veml6070.h"
 
 extern "C" {
@@ -40,7 +39,7 @@ extern "C" {
 }
 
 const uint32_t kFirmwareCreatorID = 0x10;
-const uint32_t kFirmwareVersion = 0x171017; /* 0xYYMMDD */
+const uint32_t kFirmwareVersion = 0x180403; /* 0xYYMMDD */
 
 /* Global objects */
 creator::I2C i2c;  // TODO(andres.calderon@admobilize.com): avoid global objects
@@ -112,7 +111,6 @@ static msg_t IMUThread(void *arg) {
   float current_offset_z = imu.calcMag(imu.getOffset(Z_AXIS));
 
   while (true) {
-    
     // Getting new samples from gyro/mag/accel sensors
     imu.readGyro();
     data.gyro_x = imu.calcGyro(imu.gx);
@@ -140,7 +138,7 @@ static msg_t IMUThread(void *arg) {
 
     chThdSleepMilliseconds(20);
 
-    WDT_Restart( WDT ) ;
+    WDT_Restart(WDT);
   }
   return (0);
 }

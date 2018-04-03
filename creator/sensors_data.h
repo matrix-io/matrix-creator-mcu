@@ -44,5 +44,4 @@ struct MCUData {
   uint32_t version;
 };
 
-
 #endif  // CPP_DRIVER_PRESSURE_DATA_H_

@@ -21,10 +21,10 @@ local, and you've found our code helpful, please buy us a round!
 Distributed as-is; no warranty is given.
 ******************************************************************************/
 
-#include "lsm9ds1_types.h"
-#include "lsm9ds1_registers.h"
-#include "./common_data.h"
 #include "lsm9ds1.h"
+#include "./common_data.h"
+#include "lsm9ds1_registers.h"
+#include "lsm9ds1_types.h"
 
 #define LSM9DS1_COMMUNICATION_TIMEOUT 1000
 
@@ -362,7 +362,7 @@ void LSM9DS1::calibrateMag(bool loadIn) {
   }
 }
 
-uint16_t LSM9DS1::getOffset(uint8_t axis){
+uint16_t LSM9DS1::getOffset(uint8_t axis) {
   uint16_t offset = 0;
   uint8_t msb, lsb;
   lsb = mReadByte(OFFSET_X_REG_L_M + (2 * axis));
@@ -381,15 +381,15 @@ void LSM9DS1::magSetOffset(uint8_t axis, int16_t offset) {
 }
 
 void LSM9DS1::setMagOffsetX(int offset) {
-  setMagOffsetX((int16_t)((offset/factor_scale)/ mRes));
+  setMagOffsetX((int16_t)((offset / factor_scale) / mRes));
 }
 
 void LSM9DS1::setMagOffsetY(int offset) {
-  setMagOffsetY((int16_t)((offset/factor_scale) / mRes));
+  setMagOffsetY((int16_t)((offset / factor_scale) / mRes));
 }
 
 void LSM9DS1::setMagOffsetZ(int offset) {
-  setMagOffsetZ((int16_t)((offset/factor_scale) / mRes));
+  setMagOffsetZ((int16_t)((offset / factor_scale) / mRes));
 }
 
 void LSM9DS1::setMagOffsetX(int16_t offset) {
@@ -582,17 +582,17 @@ int16_t LSM9DS1::readGyro(lsm9ds1_axis axis) {
 
 int LSM9DS1::calcGyro(int16_t gyro) {
   // Return the gyro raw reading times our pre-calculated DPS / (ADC tick):
-  return (int)((gRes * gyro)*factor_scale);
+  return (int)((gRes * gyro) * factor_scale);
 }
 
 int LSM9DS1::calcAccel(int16_t accel) {
   // Return the accel raw reading times our pre-calculated g's / (ADC tick):
-  return (int)((aRes * accel)*factor_scale);
+  return (int)((aRes * accel) * factor_scale);
 }
 
 int LSM9DS1::calcMag(int16_t mag) {
   // Return the mag raw reading times our pre-calculated Gs / (ADC tick):
-  return (int)((mRes * mag)*factor_scale);
+  return (int)((mRes * mag) * factor_scale);
 }
 
 void LSM9DS1::setGyroScale(uint16_t gScl) {

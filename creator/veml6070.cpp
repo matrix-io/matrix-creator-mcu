@@ -18,9 +18,9 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "./veml6070.h"
 #include "ch.h"
 #include "hal.h"
-#include "./veml6070.h"
 
 const uint8_t VEML6070_ADDR_1 = 0x38;
 const uint8_t VEML6070_ADDR_2 = 0x39;
@@ -42,8 +42,8 @@ int VEML6070::GetUV() {
     RSET = 270 k ohms, IT=4T
     Pag 5: http://www.vishay.com/docs/84310/designingveml6070.pdf
   */
- 
+
   return float((i2c_->ReadByte(VEML6070_ADDR_2) << 8) |
                i2c_->ReadByte(VEML6070_ADDR_1));
 }
-};
+};  // namespace creator
