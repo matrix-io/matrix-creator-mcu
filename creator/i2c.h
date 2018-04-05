@@ -21,9 +21,9 @@
 #ifndef CPP_CREATOR_I2C_H_
 #define CPP_CREATOR_I2C_H_
 
+#include "atmel_twid.h"
 #include "ch.h"
 #include "chtypes.h"
-#include "atmel_twid.h"
 
 namespace creator {
 

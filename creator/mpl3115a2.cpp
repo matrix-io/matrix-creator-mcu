@@ -18,9 +18,10 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "./mpl3115a2.h"
+#include "./common_data.h"
 #include "ch.h"
 #include "hal.h"
-#include "./mpl3115a2.h"
 
 namespace creator {
 
@@ -59,7 +60,7 @@ bool MPL3115A2::Begin() {
 }
 
 /* Gets pressure level in kPa */
-float MPL3115A2::GetPressure() {
+int MPL3115A2::GetPressure() {
   uint32_t pressure;
   int count = 0;
 
@@ -86,10 +87,10 @@ float MPL3115A2::GetPressure() {
 
   pressure = ((data[0] << 16) | (data[1] << 8) | data[2]) >> 4;
 
-  return float(pressure) / 4.0;
+  return pressure * factor_scale / 4.0;
 }
 
-float MPL3115A2::GetAltitude() {
+int MPL3115A2::GetAltitude() {
   int32_t altitude;
   int count = 0;
 
@@ -116,12 +117,12 @@ float MPL3115A2::GetAltitude() {
 
   altitude = ((data[0] << 16) | (data[1] << 8) | data[2]) >> 4;
   if (altitude & 0x80000) altitude |= 0xFFF00000;
-  return float(altitude) / 16.0;
+  return altitude * factor_scale / 16.0;
 }
 
 /* Gets the temperature in °C */
-float MPL3115A2::GetTemperature() {
-  int count=0;
+int MPL3115A2::GetTemperature() {
+  int count = 0;
 
   CTRL_REG1_.data = Read(MPL3115A2_CTRL_REG1);
   CTRL_REG1_.fields.OST = 0;
@@ -143,10 +144,10 @@ float MPL3115A2::GetTemperature() {
   i2c_->ReadBytes(address_, MPL3115A2_REGISTER_TEMP_MSB, (uint8_t*)data,
                   sizeof(data));
 
-  return float(((data[0] << 8) | data[1]) >> 4) / 16.0;
+  return (((data[0] << 8) | data[1]) >> 4) * factor_scale / 16.0;
 }
 
 uint8_t MPL3115A2::Read(uint8_t a) { return i2c_->ReadByte(address_, a); }
 
 void MPL3115A2::Write(uint8_t a, uint8_t d) { i2c_->WriteByte(address_, a, d); }
-};
+};  // namespace creator

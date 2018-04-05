@@ -24,8 +24,8 @@ Distributed as-is; no warranty is given.
 
 #include "./i2c.h"
 
-#include "lsm9ds1_types.h"
 #include "lsm9ds1_registers.h"
+#include "lsm9ds1_types.h"
 
 #define LSM9DS1_AG_ADDR(sa0) ((sa0) == 0 ? 0x6A : 0x6B)
 #define LSM9DS1_M_ADDR(sa1) ((sa1) == 0 ? 0x1C : 0x1E)
@@ -76,7 +76,14 @@ class LSM9DS1 {
 
   void calibrate(bool autoCalc = true);
   void calibrateMag(bool loadIn = true);
-  void magOffset(uint8_t axis, int16_t offset);
+  void setMagOffsetX(int offset);
+  void setMagOffsetY(int offset);
+  void setMagOffsetZ(int offset);
+  void setMagOffsetX(int16_t offset);
+  void setMagOffsetY(int16_t offset);
+  void setMagOffsetZ(int16_t offset);
+  void magSetOffset(uint8_t axis, int16_t offset);
+  uint16_t getOffset(uint8_t axis);
 
   // accelAvailable() -- Polls the accelerometer status register to check
   // if new data is available.
@@ -159,21 +166,21 @@ class LSM9DS1 {
   // DPS. This function relies on gScale and gRes being correct.
   // Input:
   //	- gyro = A signed 16-bit raw reading from the gyroscope.
-  float calcGyro(int16_t gyro);
+  int calcGyro(int16_t gyro);
 
   // calcAccel() -- Convert from RAW signed 16-bit value to gravity (g's).
   // This function reads in a signed 16-bit value and returns the scaled
   // g's. This function relies on aScale and aRes being correct.
   // Input:
   //	- accel = A signed 16-bit raw reading from the accelerometer.
-  float calcAccel(int16_t accel);
+  int calcAccel(int16_t accel);
 
   // calcMag() -- Convert from RAW signed 16-bit value to Gauss (Gs)
   // This function reads in a signed 16-bit value and returns the scaled
   // Gs. This function relies on mScale and mRes being correct.
   // Input:
   //	- mag = A signed 16-bit raw reading from the magnetometer.
-  float calcMag(int16_t mag);
+  int calcMag(int16_t mag);
 
   // setGyroScale() -- Set the full-scale range of the gyroscope.
   // This function can be called to set the scale of the gyroscope to

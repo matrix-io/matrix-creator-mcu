@@ -8,46 +8,40 @@
 
 #include "chtypes.h"
 
-const int16_t mem_offset_uv = 0x0;
-const int16_t mem_offset_press = 0x10;
-const int16_t mem_offset_humidity = 0x20;
+const int16_t mem_offset_env = 0x00;
 const int16_t mem_offset_imu = 0x30;
 const int16_t mem_offset_mcu = 0x90;
 
-struct UVData {
-  float UV;
-};
-
-struct PressureData {
-  float altitude;
-  float pressure;
-  float temperature;
-};
-
-struct HumidityData {
-  float humidity;
-  float temperature;
+struct EnvData {
+  int UV;
+  int altitude;
+  int pressure;
+  int temperature_mpl;
+  int humidity;
+  int temperature_hts;
 };
 
 struct IMUData {
+  int accel_x;
+  int accel_y;
+  int accel_z;
+  int gyro_x;
+  int gyro_y;
+  int gyro_z;
+  int mag_x;
+  int mag_y;
+  int mag_z;
+  int mag_offset_x;
+  int mag_offset_y;
+  int mag_offset_z;
   float yaw;
   float pitch;
   float roll;
-  float accel_x;
-  float accel_y;
-  float accel_z;
-  float gyro_x;
-  float gyro_y;
-  float gyro_z;
-  float mag_x;
-  float mag_y;
-  float mag_z;
 };
 
 struct MCUData {
   uint32_t ID;
   uint32_t version;
 };
-
 
 #endif  // CPP_DRIVER_PRESSURE_DATA_H_

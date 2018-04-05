@@ -27,17 +27,15 @@
 
 namespace creator {
 
-union veml6070_CFG_REG 
-{
+union veml6070_CFG_REG {
   uint8_t data;
-  struct fields_t 
-  {
-    uint8_t SD:1;
-    uint8_t reserved0:1;
-    uint8_t IT:2;
-    uint8_t ACK_THD:1;
-    uint8_t ACK:1;
-    uint8_t reserbed1:1;
+  struct fields_t {
+    uint8_t SD : 1;
+    uint8_t reserved0 : 1;
+    uint8_t IT : 2;
+    uint8_t ACK_THD : 1;
+    uint8_t ACK : 1;
+    uint8_t reserbed1 : 1;
   };
   fields_t fields;
 };
@@ -46,12 +44,11 @@ class VEML6070 {
  public:
   VEML6070(I2C* i2c);
   bool Begin();
-  float GetUV();
+  int GetUV();
 
  private:
   I2C* i2c_;
   veml6070_CFG_REG CFG_REG_;
-
 };
 
 };      // namespace creator

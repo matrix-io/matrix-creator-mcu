@@ -18,21 +18,20 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "board.h"
 #include "ch.h"
 #include "hal.h"
-#include "board.h"
 #include "wdt.h"
 
-
 #include <math.h>
-#include <string.h>
 #include <mcuconf.h>
+#include <string.h>
 
-#include "./i2c.h"
-#include "./sensors_data.h"
-#include "./mpl3115a2.h"
-#include "./lsm9ds1.h"
 #include "./hts221.h"
+#include "./i2c.h"
+#include "./lsm9ds1.h"
+#include "./mpl3115a2.h"
+#include "./sensors_data.h"
 #include "./veml6070.h"
 
 extern "C" {
@@ -40,7 +39,7 @@ extern "C" {
 }
 
 const uint32_t kFirmwareCreatorID = 0x10;
-const uint32_t kFirmwareVersion = 0x171017; /* 0xYYMMDD */
+const uint32_t kFirmwareVersion = 0x180403; /* 0xYYMMDD */
 
 /* Global objects */
 creator::I2C i2c;  // TODO(andres.calderon@admobilize.com): avoid global objects
@@ -50,6 +49,14 @@ void psram_copy(uint8_t mem_offset, char *data, uint8_t len) {
 
   for (int i = 0; i < len; i++) {
     psram[mem_offset + i] = data[i];
+  }
+}
+
+void psram_read(uint8_t mem_offset, char *data, uint8_t len) {
+  register char *psram = (char *)PSRAM_BASE_ADDRESS;
+
+  for (int i = 0; i < len; i++) {
+    data[i] = psram[mem_offset + i];
   }
 }
 
@@ -65,9 +72,7 @@ static msg_t EnvThread(void *arg) {
   hts221.Begin();
   veml6070.Begin();
 
-  PressureData press;
-  HumidityData hum;
-  UVData uv;
+  EnvData env;
   MCUData mcu_info;
 
   mcu_info.ID = kFirmwareCreatorID;
@@ -78,18 +83,16 @@ static msg_t EnvThread(void *arg) {
     chThdSleepMilliseconds(1);
     palClearPad(IOPORT3, 17);
 
-    hts221.GetData(hum.humidity, hum.temperature);
+    hts221.GetData(env.humidity, env.temperature_hts);
 
-    press.altitude = mpl3115a2.GetAltitude();
-    press.pressure = mpl3115a2.GetPressure();
-    press.temperature = mpl3115a2.GetTemperature();
+    env.altitude = mpl3115a2.GetAltitude();
+    env.pressure = mpl3115a2.GetPressure();
+    env.temperature_mpl = mpl3115a2.GetTemperature();
 
-    uv.UV = veml6070.GetUV();
+    env.UV = veml6070.GetUV();
 
     psram_copy(mem_offset_mcu, (char *)&mcu_info, sizeof(mcu_info));
-    psram_copy(mem_offset_press, (char *)&press, sizeof(press));
-    psram_copy(mem_offset_humidity, (char *)&hum, sizeof(hum));
-    psram_copy(mem_offset_uv, (char *)&uv, sizeof(uv));
+    psram_copy(mem_offset_env, (char *)&env, sizeof(env));
   }
   return (0);
 }
@@ -97,13 +100,18 @@ static msg_t EnvThread(void *arg) {
 static WORKING_AREA(waIMUThread, 512);
 static msg_t IMUThread(void *arg) {
   (void)arg;
+
   LSM9DS1 imu(&i2c, IMU_MODE_I2C, 0x6A, 0x1C);
-
   imu.begin();
-
   IMUData data;
 
+  // Getting lasts offsets saved in the imu sensor
+  float current_offset_x = imu.calcMag(imu.getOffset(X_AXIS));
+  float current_offset_y = imu.calcMag(imu.getOffset(Y_AXIS));
+  float current_offset_z = imu.calcMag(imu.getOffset(Z_AXIS));
+
   while (true) {
+    // Getting new samples from gyro/mag/accel sensors
     imu.readGyro();
     data.gyro_x = imu.calcGyro(imu.gx);
     data.gyro_y = imu.calcGyro(imu.gy);
@@ -125,11 +133,12 @@ static msg_t IMUThread(void *arg) {
                                            data.accel_z * data.accel_z)) *
                  180.0 / M_PI;
 
+    // Saving data to FPGA
     psram_copy(mem_offset_imu, (char *)&data, sizeof(data));
 
     chThdSleepMilliseconds(20);
 
-    WDT_Restart( WDT ) ;
+    WDT_Restart(WDT);
   }
   return (0);
 }

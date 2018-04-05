@@ -21,9 +21,10 @@ local, and you've found our code helpful, please buy us a round!
 Distributed as-is; no warranty is given.
 ******************************************************************************/
 
-#include "lsm9ds1_types.h"
-#include "lsm9ds1_registers.h"
 #include "lsm9ds1.h"
+#include "./common_data.h"
+#include "lsm9ds1_registers.h"
+#include "lsm9ds1_types.h"
 
 #define LSM9DS1_COMMUNICATION_TIMEOUT 1000
 
@@ -232,13 +233,13 @@ void LSM9DS1::initGyro() {
 void LSM9DS1::initAccel() {
   uint8_t tempRegValue = 0;
 
-  //	CTRL_REG5_XL (0x1F) (Default value: 0x38)
-  //	[DEC_1][DEC_0][Zen_XL][Yen_XL][Zen_XL][0][0][0]
-  //	DEC[0:1] - Decimation of accel data on OUT REG and FIFO.
-  //		00: None, 01: 2 samples, 10: 4 samples 11: 8 samples
-  //	Zen_XL - Z-axis output enabled
-  //	Yen_XL - Y-axis output enabled
-  //	Xen_XL - X-axis output enabled
+  //  CTRL_REG5_XL (0x1F) (Default value: 0x38)
+  //  [DEC_1][DEC_0][Zen_XL][Yen_XL][Zen_XL][0][0][0]
+  //  DEC[0:1] - Decimation of accel data on OUT REG and FIFO.
+  //    00: None, 01: 2 samples, 10: 4 samples 11: 8 samples
+  //  Zen_XL - Z-axis output enabled
+  //  Yen_XL - Y-axis output enabled
+  //  Xen_XL - X-axis output enabled
   if (settings.accel.enableZ) tempRegValue |= (1 << 5);
   if (settings.accel.enableY) tempRegValue |= (1 << 4);
   if (settings.accel.enableX) tempRegValue |= (1 << 3);
@@ -357,16 +358,63 @@ void LSM9DS1::calibrateMag(bool loadIn) {
   for (j = 0; j < 3; j++) {
     mBiasRaw[j] = (magMax[j] + magMin[j]) / 2;
     mBias[j] = calcMag(mBiasRaw[j]);
-    if (loadIn) magOffset(j, mBiasRaw[j]);
+    if (loadIn) magSetOffset(j, mBiasRaw[j]);
   }
 }
-void LSM9DS1::magOffset(uint8_t axis, int16_t offset) {
+
+uint16_t LSM9DS1::getOffset(uint8_t axis) {
+  uint16_t offset = 0;
+  uint8_t msb, lsb;
+  lsb = mReadByte(OFFSET_X_REG_L_M + (2 * axis));
+  msb = mReadByte(OFFSET_X_REG_H_M + (2 * axis));
+  offset = ((uint16_t)msb << 8) | lsb;
+  return offset;
+}
+
+void LSM9DS1::magSetOffset(uint8_t axis, int16_t offset) {
   if (axis > 2) return;
   uint8_t msb, lsb;
   msb = (offset & 0xFF00) >> 8;
   lsb = offset & 0x00FF;
   mWriteByte(OFFSET_X_REG_L_M + (2 * axis), lsb);
   mWriteByte(OFFSET_X_REG_H_M + (2 * axis), msb);
+}
+
+void LSM9DS1::setMagOffsetX(int offset) {
+  setMagOffsetX((int16_t)((offset / factor_scale) / mRes));
+}
+
+void LSM9DS1::setMagOffsetY(int offset) {
+  setMagOffsetY((int16_t)((offset / factor_scale) / mRes));
+}
+
+void LSM9DS1::setMagOffsetZ(int offset) {
+  setMagOffsetZ((int16_t)((offset / factor_scale) / mRes));
+}
+
+void LSM9DS1::setMagOffsetX(int16_t offset) {
+  uint8_t msb, lsb;
+  msb = (offset & 0xFF00) >> 8;
+  lsb = offset & 0x00FF;
+  mWriteByte(OFFSET_X_REG_L_M, lsb);
+  mWriteByte(OFFSET_X_REG_H_M, msb);
+}
+
+void LSM9DS1::setMagOffsetY(int16_t offset) {
+  uint8_t msb, lsb;
+  msb = (offset & 0xFF00) >> 8;
+  lsb = offset & 0x00FF;
+  mWriteByte(OFFSET_Y_REG_L_M, lsb);
+  mWriteByte(OFFSET_Y_REG_H_M, msb);
+}
+
+// TODO (yoel.castillo): setMagOffsetZ is not working , no idea why yet
+void LSM9DS1::setMagOffsetZ(int16_t offset) {
+  uint8_t msb, lsb;
+  msb = (offset & 0xFF00) >> 8;
+  lsb = offset & 0x00FF;
+  mWriteByte(OFFSET_Z_REG_L_M, lsb);
+  mWriteByte(OFFSET_Z_REG_H_M, msb);
 }
 
 void LSM9DS1::initMag() {
@@ -376,8 +424,8 @@ void LSM9DS1::initMag() {
   // [TEMP_COMP][OM1][OM0][DO2][DO1][DO0][0][ST]
   // TEMP_COMP - Temperature compensation
   // OM[1:0] - X & Y axes op mode selection
-  //	00:low-power, 01:medium performance
-  //	10: high performance, 11:ultra-high performance
+  //  00:low-power, 01:medium performance
+  //  10: high performance, 11:ultra-high performance
   // DO[2:0] - Output data rate selection
   // ST - Self-test enable
   if (settings.mag.tempCompensationEnable) tempRegValue |= (1 << 7);
@@ -411,7 +459,7 @@ void LSM9DS1::initMag() {
   // LP - Low-power mode cofiguration (1:enable)
   // SIM - SPI mode selection (0:write-only, 1:read/write enable)
   // MD[1:0] - Operating mode
-  //	00:continuous conversion, 01:single-conversion,
+  //  00:continuous conversion, 01:single-conversion,
   //  10,11: Power-down
   tempRegValue = 0;
   if (settings.mag.lowPowerEnable) tempRegValue |= (1 << 5);
@@ -421,8 +469,8 @@ void LSM9DS1::initMag() {
   // CTRL_REG4_M (Default value: 0x00)
   // [0][0][0][0][OMZ1][OMZ0][BLE][0]
   // OMZ[1:0] - Z-axis operative mode selection
-  //	00:low-power mode, 01:medium performance
-  //	10:high performance, 10:ultra-high performance
+  //  00:low-power mode, 01:medium performance
+  //  10:high performance, 10:ultra-high performance
   // BLE - Big/little endian data
   tempRegValue = 0;
   tempRegValue = (settings.mag.ZPerformance & 0x3) << 2;
@@ -431,7 +479,7 @@ void LSM9DS1::initMag() {
   // CTRL_REG5_M (Default value: 0x00)
   // [0][BDU][0][0][0][0][0][0]
   // BDU - Block data update for magnetic data
-  //	0:continuous, 1:not updated until MSB/LSB are read
+  //  0:continuous, 1:not updated until MSB/LSB are read
   tempRegValue = 0;
   mWriteByte(CTRL_REG5_M, tempRegValue);
 }
@@ -532,19 +580,19 @@ int16_t LSM9DS1::readGyro(lsm9ds1_axis axis) {
   return value;
 }
 
-float LSM9DS1::calcGyro(int16_t gyro) {
+int LSM9DS1::calcGyro(int16_t gyro) {
   // Return the gyro raw reading times our pre-calculated DPS / (ADC tick):
-  return gRes * gyro;
+  return (int)((gRes * gyro) * factor_scale);
 }
 
-float LSM9DS1::calcAccel(int16_t accel) {
+int LSM9DS1::calcAccel(int16_t accel) {
   // Return the accel raw reading times our pre-calculated g's / (ADC tick):
-  return aRes * accel;
+  return (int)((aRes * accel) * factor_scale);
 }
 
-float LSM9DS1::calcMag(int16_t mag) {
+int LSM9DS1::calcMag(int16_t mag) {
   // Return the mag raw reading times our pre-calculated Gs / (ADC tick):
-  return mRes * mag;
+  return (int)((mRes * mag) * factor_scale);
 }
 
 void LSM9DS1::setGyroScale(uint16_t gScl) {
