@@ -42,6 +42,7 @@ class HTS221 {
   uint8_t mode_;
   I2C* i2c_;
   uint8_t address_;
+  float H_RATIO, T_RATIO, H_OFFSET, T_OFFSET;
   int32_t H0, H1, H2, H3;
   int32_t T0, T1, T2, T3;
 };
