@@ -63,15 +63,6 @@ bool HTS221::Begin() {
   T2 = ((Read(0x3D) & 0xFF) << 8) + (Read(0x3C) & 0xFF);
   T3 = ((Read(0x3F) & 0xFF) << 8) + (Read(0x3E) & 0xFF);
 
-  /*
-  Values to make Interpolation in GetData faster
-  */
-  // H_RATIO = (float)(H1 - H0) / (H3 - H2) / 2;
-  // T_RATIO = (float)(T1 - T0) / (T3 - T2) / 8;
-
-  // H_OFFSET = factor_scale * H0 / 2;
-  // T_OFFSET = factor_scale * T0 / 8;
-
   return true;
 }
 
@@ -89,10 +80,6 @@ void HTS221::GetData(int& humidity, int& temperature) {
               (1.0 * H0)) * factor_scale;
   temperature =
       (((T1 - T0) / 8.0) * (temp - T2) / (T3 - T2) + (T0 / 8.0)) * factor_scale;
-
-  // humidity = (int)((hum - H2) * H_RATIO + H_OFFSET);
-  // temperature = (int)((temp - T2) * T_RATIO + T_OFFSET);
-
 }
 
 uint8_t HTS221::Read(uint8_t a) { return i2c_->ReadByte(address_, a); }
