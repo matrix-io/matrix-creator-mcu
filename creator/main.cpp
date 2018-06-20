@@ -39,7 +39,7 @@ extern "C" {
 }
 
 const uint32_t kFirmwareCreatorID = 0x10;
-const uint32_t kFirmwareVersion = 0x180403; /* 0xYYMMDD */
+const uint32_t kFirmwareVersion = 0x180620; /* 0xYYMMDD */
 
 /* Global objects */
 creator::I2C i2c;  // TODO(andres.calderon@admobilize.com): avoid global objects
