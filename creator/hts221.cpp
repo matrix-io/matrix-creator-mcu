@@ -71,8 +71,12 @@ bool HTS221::Begin() {
   H_RATIO = (float)(H1_rH_x2 - H0_rH_x2) / (H1_T0_OUT - H0_T0_OUT) / 2;
   T_RATIO = (float)(T1_degC_x8 - T0_degC_x8) / (T1_OUT - T0_OUT) / 8;
 
-  H_OFFSET = H0_rH_x2 / 2;
-  T_OFFSET = T0_degC_x8 / 8;
+  // Apply factor scale
+  H_RATIO *= factor_scale;
+  T_RATIO *= factor_scale;
+
+  H_OFFSET = factor_scale * H0_rH_x2 / 2;
+  T_OFFSET = factor_scale * T0_degC_x8 / 8;
 
   return true;
 }
