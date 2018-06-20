@@ -45,26 +45,34 @@ bool HTS221::Begin() {
 
   /*
   Read Calibration values from the non-volatile memory of the device
-  Humidity Calibration values
+  Humidity Calibration values. Variables follow datasheet names.
   */
-  H0 = Read(0x30) / 2;
-  H1 = Read(0x31) / 2;
-  H2 = ((Read(0x37) & 0xFF) << 8) | (Read(0x36) & 0xFF);
-  H3 = ((Read(0x3B) & 0xFF) << 8) | (Read(0x3A) & 0xFF);
+  H0_rH_x2 = Read(0x30);
+  H1_rH_x2 = Read(0x31);
+  H0_T0_OUT = ((Read(0x37) & 0xFF) << 8) | (Read(0x36) & 0xFF);
+  H1_T0_OUT = ((Read(0x3B) & 0xFF) << 8) | (Read(0x3A) & 0xFF);
 
-  T0 = (Read(0x32) & 0xFF);
-  T1 = (Read(0x33) & 0xFF);
+  T0_degC_x8 = (Read(0x32) & 0xFF);
+  T1_degC_x8 = (Read(0x33) & 0xFF);
 
-  int8_t raw = (Read(0x35) & 0x0F);
+  int8_t T_msd = (Read(0x35) & 0x0F);
 
-  T0 = ((raw & 0x03) << 8) + T0;
-  T1 = ((raw & 0x0C) << 6) + T1;
+  T0_degC_x8 = ((T_msd & 0x03) << 8) | T0_degC_x8;
+  T1_degC_x8 = ((T_msd & 0x0C) << 6) | T1_degC_x8;
 
-  T2 = ((Read(0x3D) & 0xFF) << 8) + (Read(0x3C) & 0xFF);
-  T3 = ((Read(0x3F) & 0xFF) << 8) + (Read(0x3E) & 0xFF);
+  T1_OUT = ((Read(0x3F) & 0xFF) << 8) + (Read(0x3E) & 0xFF);
+  T0_OUT = ((Read(0x3D) & 0xFF) << 8) + (Read(0x3C) & 0xFF);
+  if (T1_OUT > 32767) T1_OUT -= 65536;
+  if (T0_OUT > 32767) T0_OUT -= 65536;
 
-  if (T2 > 32767) T2 -= 65536;
-  if (T3 > 32767) T3 -= 65536;
+  /*
+  Values to make Interpolation in GetData faster
+  */
+  H_RATIO = (float)(H1_rH_x2 - H0_rH_x2) / (H1_T0_OUT - H0_T0_OUT) / 2;
+  T_RATIO = (float)(T1_degC_x8 - T0_degC_x8) / (T1_OUT - T0_OUT) / 8;
+
+  H_OFFSET = H0_rH_x2 / 2;
+  T_OFFSET = T0_degC_x8 / 8;
 
   return true;
 }
@@ -72,17 +80,19 @@ bool HTS221::Begin() {
 void HTS221::GetData(int& humidity, int& temperature) {
   uint8_t data[4];
 
+  // Reading sensor registers
   Read(0x28 | 0x80, data, 4);
 
+  // Fomating the data from hum and temp registers
   int hum = ((data[1] & 0xFF) * 256) + (data[0] & 0xFF);
   int temp = ((data[3] & 0xFF) * 256) + (data[2] & 0xFF);
 
+  // 2's complement conversion
   if (temp > 32767) temp -= 65536;
-  humidity = (((1.0 * H1) - (1.0 * H0)) * (1.0 * hum - 1.0 * H2) /
-                  (1.0 * H3 - 1.0 * H2) +
-              (1.0 * H0)) * factor_scale;
-  temperature =
-      (((T1 - T0) / 8.0) * (temp - T2) / (T3 - T2) + (T0 / 8.0)) * factor_scale;
+
+  // Interpolation using calibration data
+  humidity = (int)((hum - H0_T0_OUT) * H_RATIO + H_OFFSET);
+  temperature = (int)((temp - T0_OUT) * T_RATIO + T_OFFSET);
 }
 
 uint8_t HTS221::Read(uint8_t a) { return i2c_->ReadByte(address_, a); }
