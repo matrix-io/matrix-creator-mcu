@@ -63,6 +63,9 @@ bool HTS221::Begin() {
   T2 = ((Read(0x3D) & 0xFF) << 8) + (Read(0x3C) & 0xFF);
   T3 = ((Read(0x3F) & 0xFF) << 8) + (Read(0x3E) & 0xFF);
 
+  if (T2 > 32767) T2 -= 65536;
+  if (T3 > 32767) T3 -= 65536;
+
   return true;
 }
 
