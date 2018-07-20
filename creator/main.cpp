@@ -105,11 +105,6 @@ static msg_t IMUThread(void *arg) {
   imu.begin();
   IMUData data;
 
-  // Getting lasts offsets saved in the imu sensor
-  float current_offset_x = imu.calcMag(imu.getOffset(X_AXIS));
-  float current_offset_y = imu.calcMag(imu.getOffset(Y_AXIS));
-  float current_offset_z = imu.calcMag(imu.getOffset(Z_AXIS));
-
   while (true) {
     // Getting new samples from gyro/mag/accel sensors
     imu.readGyro();
