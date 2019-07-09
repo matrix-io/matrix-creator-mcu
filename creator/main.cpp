@@ -39,7 +39,7 @@ extern "C" {
 }
 
 const uint32_t kFirmwareCreatorID = 0x10;
-const uint32_t kFirmwareVersion = 0x180403; /* 0xYYMMDD */
+const uint32_t kFirmwareVersion = 0x180720; /* 0xYYMMDD */
 
 /* Global objects */
 creator::I2C i2c;  // TODO(andres.calderon@admobilize.com): avoid global objects
@@ -104,11 +104,6 @@ static msg_t IMUThread(void *arg) {
   LSM9DS1 imu(&i2c, IMU_MODE_I2C, 0x6A, 0x1C);
   imu.begin();
   IMUData data;
-
-  // Getting lasts offsets saved in the imu sensor
-  float current_offset_x = imu.calcMag(imu.getOffset(X_AXIS));
-  float current_offset_y = imu.calcMag(imu.getOffset(Y_AXIS));
-  float current_offset_z = imu.calcMag(imu.getOffset(Z_AXIS));
 
   while (true) {
     // Getting new samples from gyro/mag/accel sensors

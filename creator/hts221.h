@@ -42,8 +42,9 @@ class HTS221 {
   uint8_t mode_;
   I2C* i2c_;
   uint8_t address_;
-  int32_t H0, H1, H2, H3;
-  int32_t T0, T1, T2, T3;
+  float H_RATIO, T_RATIO, H_OFFSET, T_OFFSET;
+  int32_t H0_rH_x2, H0_T0_OUT, T0_degC_x8, T0_OUT;
+  int32_t H1_rH_x2, H1_T0_OUT, T1_degC_x8, T1_OUT;
 };
 
 };      // namespace creator
