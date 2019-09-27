@@ -33,7 +33,7 @@
 #include "./mpl3115a2.h"
 #include "./sensors_data.h"
 #include "./veml6070.h"
-
+#define M_PI 3.1415
 extern "C" {
 #include "atmel_psram.h"
 }
