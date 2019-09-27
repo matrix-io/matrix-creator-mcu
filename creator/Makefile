@@ -74,81 +74,61 @@ CSRC = $(PORTSRC) \
        $(TF)/lite/experimental/micro/tools/make/downloads/kissfft/kiss_fft.c \
        $(TF)/lite/experimental/micro/tools/make/downloads/kissfft/tools/kiss_fftr.c \
        $(TF)/lite/c/c_api_internal.c
-#       $(TF)/lite/experimental/micro/micro_error_reporter.cc 
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 #
-CPPSRC:= $(TF)/lite/experimental/micro/micro_error_reporter.cc \
-	$(TF)/lite/experimental/micro/micro_mutable_op_resolver.cc \
-	$(TF)/lite/experimental/micro/simple_tensor_allocator.cc \
-	$(TF)/lite/experimental/micro/micro_allocator.cc \
-	$(TF)/lite/experimental/micro/debug_log.cc \
-	$(TF)/lite/experimental/micro/debug_log_numbers.cc \
-	$(TF)/lite/experimental/micro/micro_interpreter.cc \
-	$(TF)/lite/experimental/micro/kernels/depthwise_conv.cc \
-	$(TF)/lite/experimental/micro/kernels/pooling.cc \
-	$(TF)/lite/experimental/micro/kernels/softmax.cc \
-	$(TF)/lite/experimental/micro/kernels/conv.cc \
-	$(TF)/lite/experimental/micro/kernels/elementwise.cc \
-	$(TF)/lite/experimental/micro/kernels/all_ops_resolver.cc \
-	$(TF)/lite/experimental/micro/kernels/fully_connected.cc \
-	$(TF)/lite/core/api/error_reporter.cc \
-	$(TF)/lite/core/api/flatbuffer_conversions.cc \
-	$(TF)/lite/core/api/op_resolver.cc \
-	$(TF)/lite/kernels/kernel_util.cc \
-	$(TF)/lite/kernels/internal/quantization_util.cc  \
-	$(TF)/lite/experimental/micro/examples/micro_speech/audio_provider.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/feature_provider.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/micro_features/no_micro_features_data.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/micro_features/yes_micro_features_data.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/micro_features/tiny_conv_micro_features_model_data.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/recognize_commands.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/command_responder.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/micro_features/micro_features_generator.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/micro_features/micro_model_settings.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/micro_features/fft.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/micro_features/fft_util.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/micro_features/filterbank.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/micro_features/filterbank_util.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/micro_features/frontend.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/micro_features/frontend_util.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/micro_features/log_lut.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/micro_features/log_scale.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/micro_features/log_scale_util.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/micro_features/noise_reduction.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/micro_features/noise_reduction_util.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/micro_features/pcan_gain_control.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/micro_features/pcan_gain_control_util.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/micro_features/window.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/micro_features/window_util.cc \
-	$(TF)/lite/experimental/micro/examples/micro_speech/main.cc
-
-
-#CPPSRC = $(TF)/lite/experimental/micro/micro_error_reporter.cc \
-#	 $(TF)/lite/experimental/micro/micro_mutable_op_resolver.cc \
-#	 $(TF)/lite/experimental/micro/simple_tensor_allocator.cc \
-#	 $(TF)/lite/experimental/micro/debug_log_numbers.cc \
-#	 $(TF)/lite/experimental/micro/micro_interpreter.cc \
-#	 $(TF)/lite/experimental/micro/kernels/depthwise_conv.cc \
-#	 $(TF)/lite/experimental/micro/kernels/softmax.cc \
-#	 $(TF)/lite/experimental/micro/kernels/all_ops_resolver.cc \
-#	 $(TF)/lite/experimental/micro/kernels/fully_connected.cc \
-#	 $(TF)/lite/core/api/error_reporter.cc \
-#	 $(TF)/lite/core/api/flatbuffer_conversions.cc \
-#	 $(TF)/lite/core/api/op_resolver.cc \
-#	 $(TF)/lite/kernels/kernel_util.cc \
-#	 $(TF)/lite/kernels/internal/quantization_util.cc \
-#	 $(TF)/lite/experimental/micro/examples/micro_speech/main.cc \
-#	 $(TF)/lite/experimental/micro/examples/micro_speech/model_settings.cc \
-#	 $(TF)/lite/experimental/micro/examples/micro_speech/audio_provider.cc \
-#	 $(TF)/lite/experimental/micro/examples/micro_speech/feature_provider.cc \
-#	 $(TF)/lite/experimental/micro/examples/micro_speech/preprocessor.cc \
-#	 $(TF)/lite/experimental/micro/examples/micro_speech/no_features_data.cc \
-#	 $(TF)/lite/experimental/micro/examples/micro_speech/yes_features_data.cc \
-#	 $(TF)/lite/experimental/micro/examples/micro_speech/tiny_conv_model_data.cc \
-#	 $(TF)/lite/experimental/micro/examples/micro_speech/recognize_commands.cc
-
+CPPSRC = i2c.cc \
+         hts221.cc \
+         lsm9ds1.cc \
+         mpl3115a2.cc \
+         veml6070.cc \
+	 $(TF)/lite/experimental/micro/micro_error_reporter.cc \
+	 $(TF)/lite/experimental/micro/micro_mutable_op_resolver.cc \
+	 $(TF)/lite/experimental/micro/simple_tensor_allocator.cc \
+	 $(TF)/lite/experimental/micro/micro_allocator.cc \
+	 $(TF)/lite/experimental/micro/debug_log.cc \
+	 $(TF)/lite/experimental/micro/debug_log_numbers.cc \
+	 $(TF)/lite/experimental/micro/micro_interpreter.cc \
+	 $(TF)/lite/experimental/micro/kernels/depthwise_conv.cc \
+	 $(TF)/lite/experimental/micro/kernels/pooling.cc \
+	 $(TF)/lite/experimental/micro/kernels/softmax.cc \
+	 $(TF)/lite/experimental/micro/kernels/conv.cc \
+	 $(TF)/lite/experimental/micro/kernels/elementwise.cc \
+	 $(TF)/lite/experimental/micro/kernels/all_ops_resolver.cc \
+	 $(TF)/lite/experimental/micro/kernels/fully_connected.cc \
+	 $(TF)/lite/core/api/error_reporter.cc \
+	 $(TF)/lite/core/api/flatbuffer_conversions.cc \
+	 $(TF)/lite/core/api/op_resolver.cc \
+	 $(TF)/lite/kernels/kernel_util.cc \
+	 $(TF)/lite/kernels/internal/quantization_util.cc  \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/audio_provider.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/feature_provider.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/micro_features/no_micro_features_data.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/micro_features/yes_micro_features_data.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/micro_features/tiny_conv_micro_features_model_data.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/recognize_commands.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/command_responder.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/micro_features/micro_features_generator.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/micro_features/micro_model_settings.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/micro_features/fft.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/micro_features/fft_util.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/micro_features/filterbank.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/micro_features/filterbank_util.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/micro_features/frontend.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/micro_features/frontend_util.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/micro_features/log_lut.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/micro_features/log_scale.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/micro_features/log_scale_util.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/micro_features/noise_reduction.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/micro_features/noise_reduction_util.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/micro_features/pcan_gain_control.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/micro_features/pcan_gain_control_util.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/micro_features/window.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/micro_features/window_util.cc \
+	 $(TF)/lite/experimental/micro/examples/micro_speech/main.cc
+ 
+ 
 # C sources to be compiled in ARM mode regardless of the global setting.
 # NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
 #       option that results in lower performance and larger code size.
