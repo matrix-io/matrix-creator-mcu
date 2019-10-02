@@ -27,6 +27,7 @@
 #include <mcuconf.h>
 #include <string.h>
 
+#include "chprintf.h"
 #include "./hts221.h"
 #include "./i2c.h"
 #include "./lsm9ds1.h"
@@ -80,7 +81,8 @@ static msg_t EnvThread(void *arg) {
 
   while (true) {
     palSetPad(IOPORT3, 17);
-    chThdSleepMilliseconds(1);
+    chprintf((BaseChannel *) &SD2, "HELLO \r\n" );
+    chThdSleepMilliseconds(800);
     palClearPad(IOPORT3, 17);
 
     hts221.GetData(env.humidity, env.temperature_hts);
@@ -145,6 +147,7 @@ int main(void) {
   halInit();
 
   chSysInit();
+  sdStart(&SD2, NULL); /* Activates the serial driver 2 */
 
   /* Configure EBI I/O for psram connection*/
   PIO_Configure(pinPsram, PIO_LISTSIZE(pinPsram));
