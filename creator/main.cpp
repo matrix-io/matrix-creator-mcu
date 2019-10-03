@@ -61,7 +61,7 @@ void psram_read(uint8_t mem_offset, char *data, uint8_t len) {
   }
 }
 
-static WORKING_AREA(waEnvThread, 256);
+static WORKING_AREA(waEnvThread, 512);
 static msg_t EnvThread(void *arg) {
   (void)arg;
 
@@ -81,8 +81,8 @@ static msg_t EnvThread(void *arg) {
 
   while (true) {
     palSetPad(IOPORT3, 17);
-    chprintf((BaseChannel *) &SD2, "HELLO \r\n" );
-    chThdSleepMilliseconds(800);
+    chprintf((BaseChannel *) &SD1, "HELLO \r\n" );
+    chThdSleepMilliseconds(1);
     palClearPad(IOPORT3, 17);
 
     hts221.GetData(env.humidity, env.temperature_hts);
@@ -147,7 +147,7 @@ int main(void) {
   halInit();
 
   chSysInit();
-  sdStart(&SD2, NULL); /* Activates the serial driver 2 */
+  sdStart(&SD1, NULL); /* Activates the serial driver 2 */
 
   /* Configure EBI I/O for psram connection*/
   PIO_Configure(pinPsram, PIO_LISTSIZE(pinPsram));
